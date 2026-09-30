@@ -47,8 +47,13 @@
 
     :local target ($ip . "/32");
 
-    :foreach q in=[/queue simple find where target=$target comment~"^NetProSpeed\\|"] do={
-      /queue simple remove $q;
+    :foreach q in=[/queue simple find where target=$target] do={
+      :local qName [/queue simple get $q name];
+      :local qComment [/queue simple get $q comment];
+      :local isNetpro ([:len $qComment] >= 10 && [:pick $qComment 0 10] = "NetProSpeed");
+      :if ($isNetpro || $qName = $ip || $qName = ("NETPRO-" . $ip)) do={
+        /queue simple remove $q;
+      }
     }
 
     :local limit ($upload . "/" . $download);
