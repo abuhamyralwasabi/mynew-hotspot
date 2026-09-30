@@ -1,0 +1,28 @@
+name: Install local Almarai font
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  font:
+    if: ${{ !hashFiles('hotspot/fonts/Almarai-Regular.woff2') || !hashFiles('hotspot/fonts/Almarai-Bold.woff2') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Almarai webfont
+        run: |
+          mkdir -p hotspot/fonts
+          curl -fsSL 'https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1/fonts/almarai-regular.woff2' -o hotspot/fonts/Almarai-Regular.woff2
+          curl -fsSL 'https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1/fonts/almarai-bold.woff2' -o hotspot/fonts/Almarai-Bold.woff2
+      - name: Commit font files
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add hotspot/fonts/Almarai-Regular.woff2 hotspot/fonts/Almarai-Bold.woff2
+          git diff --cached --quiet && exit 0
+          git commit -m 'chore: bundle Almarai webfont'
+          git push
