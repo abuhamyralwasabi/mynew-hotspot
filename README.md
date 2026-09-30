@@ -1,31 +1,35 @@
 # NetPro MikroTik Hotspot Portal
 
-نسخة خفيفة ومُعاد تنظيمها لصفحات MikroTik HotSpot، مع الحفاظ على الهوية البصرية الحالية وإضافة اختيار السرعة وتغييرها أثناء الجلسة.
+Lightweight RouterOS 6 HotSpot portal with centralized static configuration, speed selection through the HotSpot `domain` field, and speed changes through logout -> re-login -> On Login -> `alogin.html` -> status.
 
-## المكونات
-- `hotspot/` صفحات البوابة التي تُرفع إلى ملفات HotSpot في MikroTik.
-- `hotspot/config.js` مصدر بيانات ثابت للباقات والسرعات والإعلانات ونقاط البيع والخدمات.
-- `admin/config.html` أداة محلية لتحرير `config.js` وتنزيله؛ لا تستخدم قاعدة بيانات.
-- `routeros/speed2.rsc` سكربت On-Login لتطبيق السرعة.
-- `routeros/speed2-cleanup-on-logout.rsc` تنظيف Queue اختياري عند الخروج.
-- `docs/TEST-CHECKLIST.md` قائمة الاختبارات قبل التشغيل.
+## Project layout
 
-## اختيار السرعة
-صفحة `login.html` ترسل السرعة في الحقل `domain` حتى يعمل مسار HTTP-CHAP أيضًا. يتم التحقق من القيمة في الواجهة وفي `speed2.rsc`، مع fallback إلى `3M` إذا كانت القيمة غير معروفة.
+- `hotspot/` — files copied to the MikroTik HotSpot HTML directory.
+- `hotspot/config.js` — single static source for editable network content.
+- `hotspot/js/` — small page-specific scripts.
+- `routeros/speed2.rsc` — On Login script body.
+- `admin/config.html` — local configuration editor; no database.
+- `docs/` — deployment and QA notes.
+- `tests/validate.js` — local/CI static validation.
 
-## تغيير السرعة
-الدورة المقصودة هي:
-`status.html` → `logout` → `login.html?hs_relogin=1&hs_speed=...` → CHAP → `speed2` → `alogin.html` → `status.html`
+## Speed flow
 
-هذا هو Re-login flow المطلوب، وليس تعديل Queue مباشرة من المتصفح.
+1. The login form sends `domain=<speed>`.
+2. RouterOS HotSpot exposes the `domain` client value to the session/pages.
+3. The User Profile On Login script reads it and creates the Simple Queue.
+4. Status displays the current `$(domain)`.
+5. Speed change stores a short-lived state in `sessionStorage`, logs out, then redirects to login with the selected speed.
+6. Login auto-submits the card and selected `domain`.
+7. `alogin.html` detects the pending re-login and returns to status.
 
-## RouterOS 6
-ضع `speed2.rsc` في **On Login** داخل HotSpot User Profile المستخدم. يوصى بوضع سكربت التنظيف في **On Logout**.
+## Admin config
 
-يجب اختبار `domain -> /ip hotspot active -> speed2 -> /queue simple` على الراوتر الفعلي قبل اعتماد النظام للمستخدمين؛ صفحات GitHub والمتصفح وحدهما لا يثبتان دورة HotSpot كاملة.
+The admin tool edits a plain JavaScript file. It has no database and does not make router API calls.
 
-## الأداء
-تم التخلص من الاعتماد على Swiper وملفات CSS/JS القديمة، وتجميع الواجهة في CSS/JS أصغر، واستخدام Config واحد بدل تكرار جداول البيانات داخل الصفحات. تم توفير شعار SVG خفيف بدل تحميل صورة PNG كبيرة.
+## Testing
 
-## ملاحظة الإدارة
-`config.js` ملف إعدادات عادي وليس قاعدة بيانات. أداة الإدارة المحلية تساعد على تحريره ثم تنزيل نسخة جديدة. لا تضع صفحة الإدارة داخل مجلد HotSpot العام إذا كان الوصول إليها يجب أن يكون للمدير فقط.
+Run: `node tests/validate.js`
+
+Then follow `docs/TEST-CHECKLIST.md` and `docs/DEPLOYMENT.md` on a real RouterOS 6 test router before production.
+
+The official MikroTik HotSpot documentation describes `domain` as a client variable and `alogin.html` as the page shown after successful login.
