@@ -9,6 +9,7 @@
   var password = document.getElementById('password');
   var sendin = document.forms.sendin;
   var historyKey = 'netpro_card_history';
+  var lastCardKey = 'netpro_last_card';
   var pendingKey = 'netpro_pending_reauth';
 
   function parseJson(value, fallback) {
@@ -27,23 +28,41 @@
 
   function validSpeed(value) {
     var list = c.speeds || [];
+    var fallback = c.defaultSpeed || ((list[0] || {}).value || '');
     for (var i = 0; i < list.length; i++) {
       if (list[i].value === value) return value;
     }
-    return validSpeed(c.defaultSpeed) || ((list[0] || {}).value || '');
+    for (var j = 0; j < list.length; j++) {
+      if (list[j].value === fallback) return fallback;
+    }
+    return (list[0] || {}).value || '';
   }
 
   function saveCard(card, selectedSpeed) {
     if (!card) return;
     var h = history();
+    var record = { card: card, speed: validSpeed(selectedSpeed), usedAt: Date.now() };
+
     h.cards = h.cards.filter(function (item) { return item.card !== card; });
-    h.cards.unshift({ card: card, speed: selectedSpeed, usedAt: Date.now() });
+    h.cards.unshift(record);
     h.cards = h.cards.slice(0, 5);
 
     try {
       localStorage.setItem(historyKey, JSON.stringify(h));
-      localStorage.setItem('netpro_status_speed:' + card, selectedSpeed);
+      localStorage.setItem(lastCardKey, JSON.stringify(record));
+      localStorage.setItem('netpro_status_speed:' + card, record.speed);
+      localStorage.setItem('netpro_status_speed', record.speed);
     } catch (e) {}
+  }
+
+  function getLastCard() {
+    try {
+      var saved = parseJson(localStorage.getItem(lastCardKey) || 'null', null);
+      if (saved && saved.card) return saved;
+    } catch (e) {}
+
+    var h = history();
+    return h.cards[0] || null;
   }
 
   function clearPending() {
@@ -65,7 +84,9 @@
     var last = document.getElementById('lastCardBtn');
     if (!list) return;
 
+    var lastRecord = getLastCard();
     list.innerHTML = '';
+
     h.cards.forEach(function (item) {
       var row = document.createElement('div');
       row.className = 'history-item';
@@ -96,7 +117,124 @@
       list.appendChild(row);
     });
 
-    if (last) last.hidden = !h.cards.length;
+    if (last) last.hidden = !(lastRecord && lastRecord.card);
+  }
+
+  function renderLoginSpeedPicker() {
+    var picker = document.getElementById('loginSpeedPicker');
+    if (!picker || !speed) return;
+
+    var trigger = picker.querySelector('[data-speed-trigger]');
+    var sourceMenu = picker.querySelector('[data-speed-menu]');
+    if (!trigger || !sourceMenu) return;
+
+    var oldPortal = document.getElementById('loginSpeedPortal');
+    if (oldPortal) oldPortal.remove();
+
+    sourceMenu.style.display = 'none';
+    sourceMenu.setAttribute('aria-hidden', 'true');
+
+    var portal = document.createElement('div');
+    portal.id = 'loginSpeedPortal';
+    portal.className = 'speed-picker-menu login-speed-portal';
+    portal.setAttribute('role', 'listbox');
+    portal.setAttribute('aria-label', 'سرعات الاتصال');
+    portal.hidden = true;
+
+    portal.innerHTML = (c.speeds || []).map(function (item) {
+      return '<button type="button" class="speed-option" role="option" data-speed-value="' +
+        String(item.value || '').replace(/"/g, '&quot;') +
+        '"><span>' + String(item.label || item.value || '') +
+        '</span><b dir="ltr">' + String(item.value || '') + '</b></button>';
+    }).join('');
+
+    document.body.appendChild(portal);
+
+    function sync() {
+      var selected = validSpeed(speed.value);
+      speed.value = selected;
+
+      var chosen = (c.speeds || []).find(function (item) { return item.value === selected; });
+      var label = trigger.querySelector('[data-speed-label]');
+      if (label) label.textContent = chosen ? (chosen.label || chosen.value) : selected;
+
+      portal.querySelectorAll('.speed-option').forEach(function (option) {
+        var active = option.getAttribute('data-speed-value') === selected;
+        option.classList.toggle('active', active);
+        option.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+    }
+
+    function position() {
+      if (portal.hidden) return;
+
+      var rect = trigger.getBoundingClientRect();
+      var viewportPad = 8;
+      var gap = 6;
+      var width = rect.width;
+      var left = Math.max(viewportPad, Math.min(rect.left, window.innerWidth - width - viewportPad));
+
+      portal.style.width = width + 'px';
+      portal.style.left = left + 'px';
+      portal.style.visibility = 'hidden';
+      portal.style.display = 'grid';
+
+      var height = portal.offsetHeight;
+      var top = rect.bottom + gap;
+
+      if (top + height > window.innerHeight - viewportPad && rect.top > height + gap) {
+        top = rect.top - height - gap;
+      }
+
+      portal.style.top = Math.max(viewportPad, top) + 'px';
+      portal.style.visibility = 'visible';
+    }
+
+    function close() {
+      portal.hidden = true;
+      portal.style.display = 'none';
+      portal.style.visibility = 'hidden';
+      picker.classList.remove('open');
+      trigger.setAttribute('aria-expanded', 'false');
+    }
+
+    function open() {
+      sync();
+      portal.hidden = false;
+      picker.classList.add('open');
+      trigger.setAttribute('aria-expanded', 'true');
+      position();
+    }
+
+    trigger.onclick = function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (portal.hidden) open();
+      else close();
+    };
+
+    portal.onclick = function (event) {
+      var option = event.target.closest ? event.target.closest('.speed-option') : null;
+      if (!option) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      speed.value = validSpeed(option.getAttribute('data-speed-value') || '');
+      speed.dispatchEvent(new Event('change', { bubbles: true }));
+      sync();
+      close();
+    };
+
+    document.addEventListener('click', function (event) {
+      if (event.target === trigger || trigger.contains(event.target) || portal.contains(event.target)) return;
+      close();
+    });
+
+    window.addEventListener('resize', position);
+    window.addEventListener('scroll', position, true);
+
+    sync();
   }
 
   function doLogin() {
@@ -127,8 +265,14 @@
   document.addEventListener('DOMContentLoaded', function () {
     if (!form || !input || !speed) return;
 
+    function afterSpeedRender() {
+      renderLoginSpeedPicker();
+      renderHistory();
+    }
+
     if (window.HS_RENDER && typeof window.HS_RENDER.renderSpeeds === 'function') {
       window.HS_RENDER.renderSpeeds(speed);
+      afterSpeedRender();
     } else {
       var retry = 0;
       var renderTimer = setInterval(function () {
@@ -136,13 +280,13 @@
         if (window.HS_RENDER && typeof window.HS_RENDER.renderSpeeds === 'function') {
           clearInterval(renderTimer);
           window.HS_RENDER.renderSpeeds(speed);
+          afterSpeedRender();
         } else if (retry > 20) {
           clearInterval(renderTimer);
+          afterSpeedRender();
         }
       }, 50);
     }
-
-    renderHistory();
 
     input.addEventListener('input', function () {
       this.value = this.value
@@ -174,12 +318,18 @@
     var lastButton = document.getElementById('lastCardBtn');
     if (lastButton) {
       lastButton.addEventListener('click', function () {
-        var h = history();
-        if (!h.cards[0]) return;
-        input.value = h.cards[0].card;
-        speed.value = validSpeed(h.cards[0].speed);
-        if (form.requestSubmit) form.requestSubmit();
-        else doLogin();
+        var lastRecord = getLastCard();
+        if (!lastRecord || !lastRecord.card) return;
+
+        input.value = lastRecord.card;
+        speed.value = validSpeed(lastRecord.speed);
+        saveCard(input.value, speed.value);
+
+        if (ctx.chapId) {
+          doLogin();
+        } else {
+          form.submit();
+        }
       });
     }
 
@@ -231,7 +381,9 @@
 
       var overlay = document.getElementById('reauthOverlay');
       if (overlay) overlay.hidden = false;
-      setTimeout(doLogin, 80);
+      setTimeout(function () {
+        doLogin();
+      }, 80);
     }
 
     form.addEventListener('submit', function (event) {
