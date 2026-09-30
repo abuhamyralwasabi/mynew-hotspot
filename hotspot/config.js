@@ -3,6 +3,8 @@ window.NETPRO_CONFIG = {
   network: {
     name: "NetPro",
     title: "شبكة NetPro اللاسلكية",
+    logo: "imgs/NetPro-Logo.svg",
+    copyrightYear: 2026,
     supportPhone: "780201264",
     supportLabel: "دعم فني",
     footerBrand: "🔥 Netpro – تجربة كاملة",
