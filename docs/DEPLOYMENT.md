@@ -31,3 +31,6 @@ Do not expose `admin/` as a public HotSpot page directory.
 ## Logo
 
 The committed logo is `hotspot/imgs/NetPro-Logo.svg`.
+## Speed prerequisite
+
+Before production, verify that `/ip hotspot active` exposes the selected `domain` value on the target RouterOS 6 deployment. MikroTik documents `domain` in Active as a domain field tied to username/domain splitting and RADIUS. The supplied speed flow was retained because it matches the project's original analysis, but it requires this runtime verification.
