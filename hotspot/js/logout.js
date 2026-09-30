@@ -1,1 +1,36 @@
-(function(){function j(x){try{return JSON.parse(x||'null')}catch(e){return null}}document.addEventListener('DOMContentLoaded',function(){var p=j(localStorage.getItem('netpro_pending_reauth'));if(p&&p.auto&&p.speed&&(!p.createdAt||Date.now()-p.createdAt<60000)){var b=(window.HS_CONTEXT&&window.HS_CONTEXT.linkLoginOnly)||'login.html';location.replace(b+(b.indexOf('?')>=0?'&':'?')+'dst=status.html&hs_relogin=1&hs_speed='+encodeURIComponent(p.speed)+'&username='+encodeURIComponent(p.username||''))}})})();
+(function () {
+  'use strict';
+
+  function readPending() {
+    try {
+      return JSON.parse(sessionStorage.getItem('netpro_pending_reauth') || 'null');
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function clearPending() {
+    try { sessionStorage.removeItem('netpro_pending_reauth'); } catch (e) {}
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var pending = readPending();
+    if (!pending || !pending.auto || !pending.speed) return;
+
+    if (pending.createdAt && Date.now() - pending.createdAt > 60000) {
+      clearPending();
+      return;
+    }
+
+    var context = window.HS_CONTEXT || {};
+    var login = context.linkLoginOnly || context.linkLogin || 'login.html';
+    var joiner = login.indexOf('?') >= 0 ? '&' : '?';
+
+    location.replace(login + joiner + [
+      'dst=status.html',
+      'hs_relogin=1',
+      'hs_speed=' + encodeURIComponent(pending.speed),
+      'hs_username=' + encodeURIComponent(pending.username || '')
+    ].join('&'));
+  });
+})();
