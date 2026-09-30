@@ -102,9 +102,12 @@
 
   function updateUsage() {
     var total = parseInt(ctx.limitBytesTotal, 10);
-    var used = (parseInt(ctx.bytesIn, 10) || 0) + (parseInt(ctx.bytesOut, 10) || 0);
+    var routerRemain = parseInt(ctx.remainBytesTotal, 10);
+    var hasRouterRemain = isFinite(routerRemain) && routerRemain >= 0;
+    var sessionUsed = (parseInt(ctx.bytesIn, 10) || 0) + (parseInt(ctx.bytesOut, 10) || 0);
+    var used = hasRouterRemain && total > 0 ? Math.max(0, total - routerRemain) : sessionUsed;
+    var remain = hasRouterRemain ? routerRemain : (total > 0 ? Math.max(0, total - used) : null);
     var percent = total > 0 ? Math.max(0, Math.min(100, Math.floor((used / total) * 100))) : null;
-    var remain = total > 0 ? Math.max(0, total - used) : null;
     var percentEl = document.getElementById('percent');
     var bar = document.getElementById('bar');
     var circle = document.getElementById('circle');
