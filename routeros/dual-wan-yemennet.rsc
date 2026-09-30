@@ -44,6 +44,17 @@
     comment="NetPro WAN2 YemenNet DHCP";
 }
 
+# The current export incorrectly places the existing Starlink WAN interface
+# inside the LAN interface list. Remove that membership now that a real WAN
+# list is being used.
+/interface list member
+remove [find where list="LAN" and interface="WAN"]
+
+# The export also contains an old DHCP-server alert referring to the former
+# ether2 MAC. Disable that stale alert after ether2 becomes WAN2.
+/ip dhcp-server alert
+disable [find where interface="OUT" and valid-server="F4:1E:57:99:5C:97"]
+
 # Verify after insertion:
 # /ip dhcp-client print detail where interface=YEMENNET-WAN
 #
