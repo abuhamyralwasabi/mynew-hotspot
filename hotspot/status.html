@@ -1,1 +1,108 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8">$(if refresh-timeout)<meta name="hotspot-refresh" content="$(refresh-timeout-secs)">$(endif)<meta http-equiv="pragma" content="no-cache"><meta http-equiv="expires" content="-1"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>NetPro | حالة الاتصال</title><link rel="stylesheet" href="css/main.css"><script src="config.js"></script><script>window.HS_PAGE='status';window.HS_CONTEXT={username:"$(username)",domain:"$(domain)",bytesIn:"$(bytes-in)",bytesOut:"$(bytes-out)",limitBytesTotal:"$(limit-bytes-total)",refreshTimeoutSecs:"$(refresh-timeout-secs)",linkLogout:"$(link-logout)",linkLogin:"$(link-login)",linkStatus:"$(link-status)"};</script><script src="js/app.js"></script><script src="js/status.js"></script></head><body><div class="site-bg"><div class="shape shape-a"></div><div class="shape shape-b"></div></div><main class="page-root"><section id="status" class="tab-content active"><div class="logo-section"><div class="logo-frame"><img data-logo width="320" height="114" decoding="async" alt="NetPro"></div><h1 class="logo-title">📊 حالة الاتصال</h1></div><div class="glass-card"><div class="status-circle" id="statusCard"><svg viewBox="0 0 140 140"><circle cx="70" cy="70" r="60" class="bg"></circle><circle cx="70" cy="70" r="60" class="progress" id="circle"></circle></svg><div class="status-percent" id="percent">—</div></div><div class="status-bar"><div class="status-bar-fill" id="bar"></div></div><div class="status-message" id="msg">جاري التحليل...</div></div><div class="glass-card"><h2 class="section-title">📋 تفاصيل الاتصال</h2><div class="status-card-grid"><div class="status-row"><strong>رقم الكرت</strong><span class="status-value" dir="ltr">$(username)</span></div><div class="status-row"><strong>السرعة الحالية</strong><span class="status-value speed-current-value" id="currentSpeed">—</span></div><div class="status-row"><strong>التحميل</strong><span class="status-value" dir="ltr">$(bytes-out-nice)</span></div><div class="status-row"><strong>الرفع</strong><span class="status-value" dir="ltr">$(bytes-in-nice)</span></div><div class="status-row"><strong>الرصيد المستخدم</strong><span class="status-value" id="used">—</span></div><div class="status-row"><strong>الرصيد المتبقي</strong><span class="status-value" id="remain">—</span></div><div class="status-row"><strong>الوقت المستهلك</strong><span class="status-value">$(uptime)</span></div><div class="status-row"><strong>الوقت المتبقي</strong><span class="status-value">$(session-time-left)</span></div></div></div><div class="speed-change-card"><div class="speed-current"><span>⚡ السرعة المختارة حاليًا</span><strong id="currentSpeedDuplicate" class="speed-current-value">—</strong></div><select class="select" id="speedChange" aria-label="اختيار سرعة جديدة"></select><button class="btn btn-change" id="applySpeed" type="button">🔄 تطبيق السرعة الجديدة</button></div><a class="btn btn-rest" href="$(link-status)?service=rest">🍿 الاستراحة</a><a class="btn btn-live" href="$(link-status)?service=live">⚽ البث المباشر</a><form action="$(link-logout)" style="margin:0"><button class="btn btn-logout" type="submit">🚪 تسجيل الخروج</button></form><p class="warning-notice">⚠️ عند الضغط على خروج نهائي سوف تفقد بيانات الجلسة الحالية.</p></section><section id="packages" class="tab-content"><h2 class="section-title">📋 الباقات والفئات</h2><div class="table-container"><table><thead><tr><th>الفئة</th><th>الوقت</th><th>الرصيد</th><th>الصلاحية</th></tr></thead><tbody data-packages-body></tbody></table></div></section><section id="points" class="tab-content"><h2 class="section-title">📍 أماكن بيع الكروت</h2><div class="points-list" data-points-list></div></section><section id="services" class="tab-content"><div class="glass-card services-header"><h2><span data-network-name></span> <span data-network-short style="color:var(--b)">NetPro</span></h2><p class="services-subtitle" data-welcome></p></div><div class="service-features" data-service-features></div><div class="pro-hub-container"><div class="hub-header"><span class="hub-title">Netpro Entertainment Hub</span><span class="live-pulse"></span></div><div class="pro-hub-grid" data-entertainment-grid></div></div></section><footer><div class="footer-brand" data-footer-brand></div><span data-support-phone></span></footer></main></body></html>
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  $(if refresh-timeout)<meta name="hotspot-refresh" content="$(refresh-timeout-secs)">$(endif)
+  <meta http-equiv="pragma" content="no-cache">
+  <meta http-equiv="expires" content="-1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>NetPro | حالة الاتصال</title>
+  <link rel="stylesheet" href="css/main.css">
+  <script src="config.js"></script>
+  <script>
+    window.HS_PAGE = 'status';
+    window.HS_CONTEXT = {
+      username: "$(username)",
+      domain: "$(domain)",
+      bytesIn: "$(bytes-in)",
+      bytesOut: "$(bytes-out)",
+      limitBytesTotal: "$(limit-bytes-total)",
+      refreshTimeoutSecs: "$(refresh-timeout-secs)",
+      linkLogout: "$(link-logout)",
+      linkLogin: "$(link-login)",
+      linkStatus: "$(link-status)"
+    };
+  </script>
+  <script src="js/app.js"></script>
+  <script src="js/status.js"></script>
+</head>
+<body>
+  <div class="site-bg"><div class="shape shape-a"></div><div class="shape shape-b"></div></div>
+
+  <main class="page-root">
+    <section id="status" class="tab-content active">
+      <div class="logo-section">
+        <div class="logo-frame"><img data-logo width="320" height="114" decoding="async" alt="NetPro"></div>
+        <h1 class="logo-title">📊 حالة الاتصال</h1>
+      </div>
+
+      <div class="glass-card">
+        <div class="status-circle" id="statusCard">
+          <svg viewBox="0 0 140 140" aria-label="نسبة استهلاك الرصيد">
+            <circle cx="70" cy="70" r="60" class="bg"></circle>
+            <circle cx="70" cy="70" r="60" class="progress" id="circle"></circle>
+          </svg>
+          <div class="status-percent" id="percent">—</div>
+        </div>
+        <div class="status-bar" aria-hidden="true"><div class="status-bar-fill" id="bar"></div></div>
+        <div class="status-message" id="msg">جاري التحليل...</div>
+      </div>
+
+      <div class="glass-card">
+        <h2 class="section-title">📋 تفاصيل الاتصال</h2>
+        <div class="status-card-grid">
+          <div class="status-row"><strong>رقم الكرت</strong><span class="status-value" dir="ltr">$(username)</span></div>
+          <div class="status-row"><strong>السرعة الحالية</strong><span class="status-value speed-current-value" id="currentSpeed">—</span></div>
+          <div class="status-row"><strong>التحميل</strong><span class="status-value" dir="ltr">$(bytes-out-nice)</span></div>
+          <div class="status-row"><strong>الرفع</strong><span class="status-value" dir="ltr">$(bytes-in-nice)</span></div>
+          <div class="status-row"><strong>الرصيد المستخدم</strong><span class="status-value" id="used">—</span></div>
+          <div class="status-row"><strong>الرصيد المتبقي</strong><span class="status-value" id="remain">—</span></div>
+          <div class="status-row"><strong>الوقت المستهلك</strong><span class="status-value">$(uptime)</span></div>
+          <div class="status-row"><strong>الوقت المتبقي</strong><span class="status-value">$(session-time-left)</span></div>
+        </div>
+      </div>
+
+      <div class="speed-change-card">
+        <div class="speed-current">
+          <span>⚡ السرعة المختارة حاليًا</span>
+          <strong id="currentSpeedDuplicate" class="speed-current-value">—</strong>
+        </div>
+        <label class="field-label" for="speedChange">تحديث السرعة</label>
+        <select class="select" id="speedChange" aria-label="اختيار سرعة جديدة"></select>
+        <button class="btn btn-change" id="applySpeed" type="button">🔄 تطبيق السرعة الجديدة</button>
+      </div>
+
+      <a class="btn btn-rest" href="$(link-status)?service=rest">🍿 الاستراحة</a>
+      <a class="btn btn-live" href="$(link-status)?service=live">⚽ البث المباشر</a>
+
+      <form action="$(link-logout)" style="margin:0">
+        <button class="btn btn-logout" type="submit">🚪 تسجيل الخروج</button>
+      </form>
+
+      <p class="warning-notice">⚠️ تغيير السرعة يعيد تسجيل الدخول تلقائيًا وقد يسبب انقطاعًا قصيرًا للاتصال.</p>
+    </section>
+
+    <section id="packages" class="tab-content">
+      <h2 class="section-title">📋 الباقات والفئات</h2>
+      <div class="table-container"><table><thead><tr><th>الفئة</th><th>الوقت</th><th>الرصيد</th><th>الصلاحية</th></tr></thead><tbody data-packages-body></tbody></table></div>
+    </section>
+
+    <section id="points" class="tab-content">
+      <h2 class="section-title">📍 أماكن بيع الكروت</h2>
+      <div class="points-list" data-points-list></div>
+    </section>
+
+    <section id="services" class="tab-content">
+      <div class="glass-card services-header"><h2><span data-network-name></span> <span data-network-short style="color:var(--b)">NetPro</span></h2><p class="services-subtitle" data-welcome></p></div>
+      <div class="service-features" data-service-features></div>
+      <div class="pro-hub-container"><div class="hub-header"><span class="hub-title">Netpro Entertainment Hub</span><span class="live-pulse"></span></div><div class="pro-hub-grid" data-entertainment-grid></div></div>
+    </section>
+
+    <footer><div class="footer-brand" data-footer-brand></div><span data-support-phone></span></footer>
+  </main>
+
+  <div class="overlay" id="reauthOverlay" hidden>
+    <div class="overlay-card"><div class="spinner"></div><strong>جاري تطبيق السرعة الجديدة…</strong><small>سيتم فتح حالة الاتصال تلقائيًا</small></div>
+  </div>
+</body>
+</html>
