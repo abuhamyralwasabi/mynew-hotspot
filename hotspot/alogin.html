@@ -17,14 +17,40 @@
 
       var target = '$(link-status)';
       var isReauth = pending && pending.auto;
+      var card = '$(username)';
+      var selectedSpeed = '$(domain)';
+
+      function rememberSuccessfulCard() {
+        if (!card) return;
+
+        var record = {
+          card: card,
+          speed: selectedSpeed || '$(domain)',
+          usedAt: Date.now()
+        };
+
+        try {
+          localStorage.setItem('netpro_last_card', JSON.stringify(record));
+          localStorage.setItem('netpro_status_speed:' + card, record.speed);
+          if (record.speed) localStorage.setItem('netpro_status_speed', record.speed);
+
+          var stored = JSON.parse(localStorage.getItem('netpro_card_history') || '{"cards":[]}');
+          if (!stored || !Array.isArray(stored.cards)) stored = { cards: [] };
+
+          stored.cards = stored.cards.filter(function (item) {
+            return item && item.card !== card;
+          });
+          stored.cards.unshift(record);
+          stored.cards = stored.cards.slice(0, 5);
+          localStorage.setItem('netpro_card_history', JSON.stringify(stored));
+        } catch (e) {}
+      }
+
+      rememberSuccessfulCard();
 
       if (isReauth) {
         try {
           sessionStorage.removeItem('netpro_pending_reauth');
-          if ('$(domain)') {
-            localStorage.setItem('netpro_status_speed:' + '$(username)', '$(domain)');
-            localStorage.setItem('netpro_status_speed', '$(domain)');
-          }
         } catch (e) {}
 
         setTimeout(function () {
@@ -32,13 +58,6 @@
         }, 1700);
         return;
       }
-
-      try {
-        if ('$(domain)') {
-          localStorage.setItem('netpro_status_speed:' + '$(username)', '$(domain)');
-          localStorage.setItem('netpro_status_speed', '$(domain)');
-        }
-      } catch (e) {}
 
       setTimeout(function () {
         location.replace(unescape('$(link-redirect-esc)'));
