@@ -33,3 +33,6 @@ Run: `node tests/validate.js`
 Then follow `docs/TEST-CHECKLIST.md` and `docs/DEPLOYMENT.md` on a real RouterOS 6 test router before production.
 
 The official MikroTik HotSpot documentation describes `domain` as a client variable and `alogin.html` as the page shown after successful login.
+## Speed transport prerequisite
+
+The current `speed2` implementation reads `/ip hotspot active` -> `domain`. MikroTik documents that `active.domain` represents a user domain when username/domain splitting is used and notes that this property is used with RADIUS authentication. Therefore, this speed transport must be verified on the target RouterOS 6 setup (especially when local HotSpot users are used) before production deployment. If the router does not populate `active.domain`, the portal must switch to a different transport rather than silently relying on it.
