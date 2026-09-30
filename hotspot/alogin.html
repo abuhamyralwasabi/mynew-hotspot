@@ -21,7 +21,10 @@
       if (isReauth) {
         try {
           sessionStorage.removeItem('netpro_pending_reauth');
-          if ('$(domain)') localStorage.setItem('netpro_status_speed:' + '$(username)', '$(domain)');
+          if ('$(domain)') {
+            localStorage.setItem('netpro_status_speed:' + '$(username)', '$(domain)');
+            localStorage.setItem('netpro_status_speed', '$(domain)');
+          }
         } catch (e) {}
 
         setTimeout(function () {
@@ -31,7 +34,10 @@
       }
 
       try {
-        if ('$(domain)') localStorage.setItem('netpro_status_speed', '$(domain)');
+        if ('$(domain)') {
+          localStorage.setItem('netpro_status_speed:' + '$(username)', '$(domain)');
+          localStorage.setItem('netpro_status_speed', '$(domain)');
+        }
       } catch (e) {}
 
       setTimeout(function () {
