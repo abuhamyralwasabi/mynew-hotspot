@@ -1,7 +1,14 @@
-# NetPro Hotspot speed2 — RouterOS 6.x
-# Paste this body into the target HotSpot User Profile -> Scripts -> On Login.
-# The portal sends the selected value as domain=<speed>.
-# Safety fallback: 2M, matching hotspot/config.js defaultSpeed.
+# NetPro HotSpot dynamic speed — RouterOS 6.49.x
+# Use this as the complete On Login script of the dedicated NETPRO-SPEED profile.
+#
+# Prerequisite:
+# - HotSpot server profile must use http-chap,http-pap for selectable-speed users.
+# - RADIUS must be enabled (the supplied router export already uses use-radius=yes).
+# - The portal sends the selected speed as domain=<speed>.
+#
+# The script intentionally creates only ONE Simple Queue per active client.
+# It uses max-limit only; it does not reserve limit-at bandwidth.
+
 {
   :do {
     :local username $user;
@@ -16,6 +23,7 @@
         :set speed [/ip hotspot active get $active domain];
         :break;
       }
+
       :if ($speed != "") do={ :break; }
       :delay 250ms;
     }
@@ -34,22 +42,23 @@
       :set speed "2M";
       :set upload "400K";
       :set download "2M";
+      :log warning ("NetPro speed: invalid or empty domain; fallback to 2M | user=" . $username);
     }
 
     :local target ($ip . "/32");
-    :foreach q in=[/queue simple find where name=$ip] do={
+
+    :foreach q in=[/queue simple find where target=$target comment~"^NetProSpeed\\|"] do={
       /queue simple remove $q;
     }
 
     :local limit ($upload . "/" . $download);
     :local queueComment ("NetProSpeed|" . $speed . "|" . $username);
-    :local anchor [/queue simple find where name="queue1"];
 
-    :if ([:len $anchor] > 0) do={
-      /queue simple add name=$ip target=$target limit-at=$limit max-limit=$limit comment=$queueComment place-before=$anchor;
-    } else={
-      /queue simple add name=$ip target=$target limit-at=$limit max-limit=$limit comment=$queueComment;
-    }
+    /queue simple add \
+      name=("NETPRO-" . $ip) \
+      target=$target \
+      max-limit=$limit \
+      comment=$queueComment;
   } on-error={
     :log warning ("NetPro speed2 failed | user=" . $user . " | ip=" . $address);
   };
