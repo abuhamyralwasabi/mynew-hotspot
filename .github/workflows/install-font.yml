@@ -9,20 +9,33 @@ permissions:
 
 jobs:
   font:
-    if: ${{ !hashFiles('hotspot/fonts/Almarai-Regular.woff2') || !hashFiles('hotspot/fonts/Almarai-Bold.woff2') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Download Almarai webfont
+
+      - name: Install local font when missing
         run: |
+          if [ -f hotspot/fonts/Almarai-Regular.woff2 ] && [ -f hotspot/fonts/Almarai-Bold.woff2 ]; then
+            echo "Almarai files already exist."
+            exit 0
+          fi
+
           mkdir -p hotspot/fonts
           curl -fsSL 'https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1/fonts/almarai-regular.woff2' -o hotspot/fonts/Almarai-Regular.woff2
           curl -fsSL 'https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1/fonts/almarai-bold.woff2' -o hotspot/fonts/Almarai-Bold.woff2
+
+          test -s hotspot/fonts/Almarai-Regular.woff2
+          test -s hotspot/fonts/Almarai-Bold.woff2
+
       - name: Commit font files
         run: |
+          if [ -z "$(git status --porcelain hotspot/fonts/Almarai-Regular.woff2 hotspot/fonts/Almarai-Bold.woff2)" ]; then
+            echo "No font changes to commit."
+            exit 0
+          fi
+
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add hotspot/fonts/Almarai-Regular.woff2 hotspot/fonts/Almarai-Bold.woff2
-          git diff --cached --quiet && exit 0
           git commit -m 'chore: bundle Almarai webfont'
           git push
