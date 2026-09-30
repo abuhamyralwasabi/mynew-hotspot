@@ -42,7 +42,7 @@
 
     try {
       localStorage.setItem(historyKey, JSON.stringify(h));
-      localStorage.setItem('netpro_status_speed', selectedSpeed);
+      localStorage.setItem('netpro_status_speed:' + card, selectedSpeed);
     } catch (e) {}
   }
 
