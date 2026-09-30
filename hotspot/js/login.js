@@ -127,7 +127,21 @@
   document.addEventListener('DOMContentLoaded', function () {
     if (!form || !input || !speed) return;
 
-    window.HS_RENDER.renderSpeeds(speed);
+    if (window.HS_RENDER && typeof window.HS_RENDER.renderSpeeds === 'function') {
+      window.HS_RENDER.renderSpeeds(speed);
+    } else {
+      var retry = 0;
+      var renderTimer = setInterval(function () {
+        retry++;
+        if (window.HS_RENDER && typeof window.HS_RENDER.renderSpeeds === 'function') {
+          clearInterval(renderTimer);
+          window.HS_RENDER.renderSpeeds(speed);
+        } else if (retry > 20) {
+          clearInterval(renderTimer);
+        }
+      }, 50);
+    }
+
     renderHistory();
 
     input.addEventListener('input', function () {
