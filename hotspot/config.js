@@ -10,6 +10,20 @@ window.NETPRO_CONFIG = {
     footerBrand: "🔥 Netpro – تجربة كاملة",
     footerText: "تصميم قسم الـ IT نت برو"
   },
+  router: {
+    model: "RB1100Dx4",
+    routerOs: "6.49.19",
+    htmlDirectory: "netpro",
+    serverProfiles: ["hsprof1", "hsprof2"],
+    hotspotDnsNames: ["p.net", "P.com"],
+    usesRadius: true,
+    dynamicSpeedProfile: "NETPRO-SPEED",
+    wanPorts: {
+      starlink: "ether1",
+      yemenNet: "ether2"
+    },
+    distributionPorts: ["ether3", "ether4", "ether5", "ether6", "ether7", "ether8", "ether9", "ether10", "ether11", "ether12", "ether13"]
+  },
   messages: {
     welcome: "أهلاً بك في شبكة نت برو، إنترنت سريع وثابت بتجربة أقوى وأكثر استقراراً.",
     marquee: "استخدم الانترنت فيما يرضي الله ✨ نسعى لتقديم خدمة ممتازة على مدار 24 ساعة",
