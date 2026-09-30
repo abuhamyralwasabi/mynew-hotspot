@@ -1,0 +1,5 @@
+Almarai font is distributed under the SIL Open Font License 1.1.
+
+The font is bundled locally for offline HotSpot use. See the upstream Google Fonts Almarai project for the font license and source information.
+
+Source: google/fonts, ofl/almarai
