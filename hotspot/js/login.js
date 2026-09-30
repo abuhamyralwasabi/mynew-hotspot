@@ -1,1 +1,233 @@
-(function(){'use strict';var c=window.NETPRO_CONFIG||{},ctx=window.HS_CONTEXT||{},form=document.getElementById('loginForm'),input=document.getElementById('username'),speed=document.getElementById('speed'),sendin=document.forms.sendin,key='netpro_card_history',pendingKey='netpro_pending_reauth';function json(x,d){try{return JSON.parse(x)||d}catch(e){return d}}function hist(){var h=json(localStorage.getItem(key)||'null',{cards:[]});if(!Array.isArray(h.cards))h.cards=[];return h}function save(card,s){if(!card)return;var h=hist();h.cards=h.cards.filter(function(x){return x.card!==card});h.cards.unshift({card:card,speed:s,usedAt:Date.now()});h.cards=h.cards.slice(0,3);localStorage.setItem(key,JSON.stringify(h));localStorage.setItem('netpro_status_speed',s)}function valid(s){for(var i=0;i<(c.speeds||[]).length;i++)if(c.speeds[i].value===s)return s;return c.defaultSpeed||'2M'}function render(){var h=hist(),list=document.getElementById('cardHistoryList'),wrap=document.getElementById('cardHistoryDropdown'),last=document.getElementById('lastCardBtn');if(!list)return;list.innerHTML='';h.cards.forEach(function(x){var row=document.createElement('div');row.className='history-item';var b=document.createElement('button');b.type='button';b.className='history-card-select';b.textContent=x.card;b.onclick=function(){input.value=x.card;speed.value=valid(x.speed);wrap.hidden=true};var d=document.createElement('button');d.type='button';d.className='delete-card-btn';d.textContent='×';d.onclick=function(){h.cards=h.cards.filter(function(y){return y.card!==x.card});localStorage.setItem(key,JSON.stringify(h));render()};row.appendChild(b);row.appendChild(d);list.appendChild(row)});last.hidden=!h.cards.length}function doLogin(){var u=input.value.trim(),p=(document.getElementById('password').value||''),s=valid(speed.value);if(!u){input.focus();return false}speed.value=s;if(sendin&&ctx.chapId){sendin.username.value=u;sendin.password.value=hexMD5(ctx.chapId+p+ctx.chapChallenge);sendin.domain.value=s;sendin.submit();return false}return true}window.doLogin=doLogin;document.addEventListener('DOMContentLoaded',function(){window.HS_RENDER.renderSpeeds(speed);render();input.addEventListener('input',function(){this.value=this.value.replace(/\s/g,'').replace(/[٠-٩]/g,function(x){return String(x.charCodeAt(0)-1632)})});input.addEventListener('focus',function(){if(hist().cards.length)document.getElementById('cardHistoryDropdown').hidden=false});document.getElementById('clearHistory').onclick=function(){localStorage.removeItem(key);render()};document.getElementById('lastCardBtn').onclick=function(){var h=hist();if(h.cards[0]){input.value=h.cards[0].card;speed.value=valid(h.cards[0].speed);form.requestSubmit?form.requestSubmit():doLogin()}};var perf=document.getElementById('performanceToggle'),on=localStorage.getItem('netpro_performance_mode')==='1';document.documentElement.classList.toggle('performance-mode',on);perf.onclick=function(){on=!on;document.documentElement.classList.toggle('performance-mode',on);localStorage.setItem('netpro_performance_mode',on?'1':'0');perf.textContent=on?'✅ تم تفعيل وضع التوفير':'🚀 وضع التوفير الذكي'};form.onsubmit=function(e){save(input.value.trim(),valid(speed.value));if(ctx.chapId){e.preventDefault();doLogin()}};var q=new URLSearchParams(location.search),pending=json(localStorage.getItem(pendingKey)||'null');if(!ctx.error&&(q.get('hs_relogin')==='1'||pending&&pending.auto)){var s=valid(q.get('hs_speed')||(pending||{}).speed);if((pending||{}).username)input.value=pending.username;speed.value=s;var ov=document.getElementById('reauthOverlay');if(ov)ov.hidden=false;setTimeout(function(){doLogin()},100)}})})();
+(function () {
+  'use strict';
+
+  var c = window.NETPRO_CONFIG || {};
+  var ctx = window.HS_CONTEXT || {};
+  var form = document.getElementById('loginForm');
+  var input = document.getElementById('username');
+  var speed = document.getElementById('speed');
+  var password = document.getElementById('password');
+  var sendin = document.forms.sendin;
+  var historyKey = 'netpro_card_history';
+  var pendingKey = 'netpro_pending_reauth';
+
+  function parseJson(value, fallback) {
+    try {
+      return JSON.parse(value) || fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  function history() {
+    var value = parseJson(localStorage.getItem(historyKey) || 'null', { cards: [] });
+    if (!Array.isArray(value.cards)) value.cards = [];
+    return value;
+  }
+
+  function validSpeed(value) {
+    var list = c.speeds || [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].value === value) return value;
+    }
+    return validSpeed(c.defaultSpeed) || ((list[0] || {}).value || '');
+  }
+
+  function saveCard(card, selectedSpeed) {
+    if (!card) return;
+    var h = history();
+    h.cards = h.cards.filter(function (item) { return item.card !== card; });
+    h.cards.unshift({ card: card, speed: selectedSpeed, usedAt: Date.now() });
+    h.cards = h.cards.slice(0, 5);
+
+    try {
+      localStorage.setItem(historyKey, JSON.stringify(h));
+      localStorage.setItem('netpro_status_speed', selectedSpeed);
+    } catch (e) {}
+  }
+
+  function clearPending() {
+    try { sessionStorage.removeItem(pendingKey); } catch (e) {}
+  }
+
+  function pendingState() {
+    try {
+      return parseJson(sessionStorage.getItem(pendingKey) || 'null', null);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function renderHistory() {
+    var h = history();
+    var list = document.getElementById('cardHistoryList');
+    var wrap = document.getElementById('cardHistoryDropdown');
+    var last = document.getElementById('lastCardBtn');
+    if (!list) return;
+
+    list.innerHTML = '';
+    h.cards.forEach(function (item) {
+      var row = document.createElement('div');
+      row.className = 'history-item';
+
+      var select = document.createElement('button');
+      select.type = 'button';
+      select.className = 'history-card-select';
+      select.textContent = item.card;
+      select.addEventListener('click', function () {
+        input.value = item.card;
+        speed.value = validSpeed(item.speed);
+        wrap.hidden = true;
+      });
+
+      var del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'delete-card-btn';
+      del.textContent = '×';
+      del.setAttribute('aria-label', 'حذف الكرت');
+      del.addEventListener('click', function () {
+        h.cards = h.cards.filter(function (x) { return x.card !== item.card; });
+        try { localStorage.setItem(historyKey, JSON.stringify(h)); } catch (e) {}
+        renderHistory();
+      });
+
+      row.appendChild(select);
+      row.appendChild(del);
+      list.appendChild(row);
+    });
+
+    if (last) last.hidden = !h.cards.length;
+  }
+
+  function doLogin() {
+    var username = input.value.trim();
+    var selectedSpeed = validSpeed(speed.value);
+    var rawPassword = password ? (password.value || '') : '';
+
+    if (!username || !selectedSpeed) {
+      if (!username) input.focus();
+      return false;
+    }
+
+    speed.value = selectedSpeed;
+
+    if (sendin && ctx.chapId) {
+      sendin.username.value = username;
+      sendin.password.value = hexMD5(ctx.chapId + rawPassword + ctx.chapChallenge);
+      sendin.domain.value = selectedSpeed;
+      sendin.submit();
+      return false;
+    }
+
+    return true;
+  }
+
+  window.doLogin = doLogin;
+
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!form || !input || !speed) return;
+
+    window.HS_RENDER.renderSpeeds(speed);
+    renderHistory();
+
+    input.addEventListener('input', function () {
+      this.value = this.value
+        .replace(/\s/g, '')
+        .replace(/[٠-٩]/g, function (digit) {
+          return String(digit.charCodeAt(0) - 1632);
+        });
+    });
+
+    input.addEventListener('focus', function () {
+      var wrap = document.getElementById('cardHistoryDropdown');
+      if (wrap && history().cards.length) wrap.hidden = false;
+    });
+
+    document.addEventListener('click', function (event) {
+      var wrap = document.getElementById('cardHistoryDropdown');
+      if (!wrap || event.target === input || wrap.contains(event.target)) return;
+      wrap.hidden = true;
+    });
+
+    var clearButton = document.getElementById('clearHistory');
+    if (clearButton) {
+      clearButton.addEventListener('click', function () {
+        try { localStorage.removeItem(historyKey); } catch (e) {}
+        renderHistory();
+      });
+    }
+
+    var lastButton = document.getElementById('lastCardBtn');
+    if (lastButton) {
+      lastButton.addEventListener('click', function () {
+        var h = history();
+        if (!h.cards[0]) return;
+        input.value = h.cards[0].card;
+        speed.value = validSpeed(h.cards[0].speed);
+        if (form.requestSubmit) form.requestSubmit();
+        else doLogin();
+      });
+    }
+
+    var perf = document.getElementById('performanceToggle');
+    var perfEnabled = false;
+    try { perfEnabled = localStorage.getItem('netpro_performance_mode') === '1'; } catch (e) {}
+    document.documentElement.classList.toggle('performance-mode', perfEnabled);
+
+    if (perf) {
+      perf.textContent = perfEnabled ? '✅ تم تفعيل وضع التوفير' : '🚀 وضع التوفير الذكي';
+      perf.addEventListener('click', function () {
+        perfEnabled = !perfEnabled;
+        document.documentElement.classList.toggle('performance-mode', perfEnabled);
+        try { localStorage.setItem('netpro_performance_mode', perfEnabled ? '1' : '0'); } catch (e) {}
+        perf.textContent = perfEnabled ? '✅ تم تفعيل وضع التوفير' : '🚀 وضع التوفير الذكي';
+      });
+    }
+
+    var query = new URLSearchParams(location.search);
+    var querySpeed = validSpeed(query.get('hs_speed') || '');
+    var queryUsername = query.get('hs_username') || '';
+    var isRelogin = query.get('hs_relogin') === '1';
+    var pending = pendingState();
+
+    if (ctx.error) {
+      clearPending();
+      return;
+    }
+
+    if (isRelogin || (pending && pending.auto)) {
+      var reloginSpeed = querySpeed || validSpeed(pending && pending.speed);
+      var reloginUser = queryUsername || ((pending || {}).username || ctx.username || '');
+
+      if (!reloginSpeed || !reloginUser) {
+        clearPending();
+        return;
+      }
+
+      input.value = reloginUser;
+      speed.value = reloginSpeed;
+      try {
+        sessionStorage.setItem(pendingKey, JSON.stringify({
+          auto: true,
+          speed: reloginSpeed,
+          username: reloginUser,
+          createdAt: Date.now()
+        }));
+      } catch (e) {}
+
+      var overlay = document.getElementById('reauthOverlay');
+      if (overlay) overlay.hidden = false;
+      setTimeout(doLogin, 80);
+    }
+
+    form.addEventListener('submit', function (event) {
+      var card = input.value.trim();
+      var selectedSpeed = validSpeed(speed.value);
+      saveCard(card, selectedSpeed);
+      if (ctx.chapId) {
+        event.preventDefault();
+        doLogin();
+      }
+    });
+  });
+})();
