@@ -1,0 +1,45 @@
+const fs = require('fs');
+const vm = require('vm');
+const path = require('path');
+
+const root = path.resolve(__dirname, '..');
+const configSource = fs.readFileSync(path.join(root, 'hotspot', 'config.js'), 'utf8');
+const context = { window: {} };
+vm.createContext(context);
+vm.runInContext(configSource, context, { filename: 'hotspot/config.js' });
+const config = context.window.NETPRO_CONFIG;
+const errors = [];
+if (!config || !config.network || !config.network.name) errors.push('network.name is required');
+if (!config.network.logo) errors.push('network.logo is required');
+if (!Array.isArray(config.speeds) || !config.speeds.length) errors.push('speeds must be non-empty');
+const seen = new Set();
+for (const speed of config.speeds || []) {
+  if (!/^[0-9]+[KMG]$/.test(speed.value || '')) errors.push('Invalid speed value: ' + speed.value);
+  if (seen.has(speed.value)) errors.push('Duplicate speed: ' + speed.value);
+  seen.add(speed.value);
+  if (!speed.upload || !speed.download) errors.push('Missing upload/download for: ' + speed.value);
+}
+if (config.defaultSpeed && !seen.has(config.defaultSpeed)) errors.push('defaultSpeed is not present in speeds');
+for (const file of fs.readdirSync(path.join(root, 'hotspot', 'js'))) {
+  if (!file.endsWith('.js')) continue;
+  const source = fs.readFileSync(path.join(root, 'hotspot', 'js', file), 'utf8');
+  try { new Function(source); } catch (e) { errors.push(file + ': JS syntax error: ' + e.message); }
+}
+const htmlFiles = ['login.html','status.html','logout.html','alogin.html','prices.html','redirect.html','rlogin.html','block.html','error.html'];
+for (const file of htmlFiles) {
+  const p = path.join(root, 'hotspot', file);
+  if (!fs.existsSync(p)) errors.push('Missing HotSpot page: ' + file);
+  else if (file === 'login.html') {
+    const html = fs.readFileSync(p, 'utf8');
+    if (!html.includes('name="domain"')) errors.push('login.html does not submit domain');
+    if (!html.includes('js/md5.js')) errors.push('login.html missing md5.js');
+  }
+}
+const app = fs.readFileSync(path.join(root,'hotspot/js/app.js'),'utf8');
+if (app.includes('NetPro-Logo.png')) errors.push('app.js references missing PNG logo');
+if (!fs.existsSync(path.join(root,'hotspot/imgs/NetPro-Logo.svg'))) errors.push('SVG logo asset missing');
+const speed2 = fs.readFileSync(path.join(root,'routeros/speed2.rsc'),'utf8');
+for (const speed of config.speeds || []) { if (!speed2.includes('"' + speed.value + '"')) errors.push('speed2.rsc missing speed ' + speed.value); }
+if (!speed2.includes('/ip hotspot active') || !speed2.includes('/queue simple add')) errors.push('speed2.rsc missing expected operations');
+if (errors.length) { console.error(errors.join('\n')); process.exit(1); }
+console.log('NetPro validation passed:', config.speeds.length, 'speeds; all JS syntax checks passed.');
