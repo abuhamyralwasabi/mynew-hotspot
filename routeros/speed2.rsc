@@ -1,13 +1,14 @@
 # NetPro Hotspot speed2 — RouterOS 6.x
 # Paste this body into the target HotSpot User Profile -> Scripts -> On Login.
 # The portal sends the selected value as domain=<speed>.
+# Safety fallback: 2M, matching hotspot/config.js defaultSpeed.
 {
   :do {
     :local username $user;
     :local ip $address;
     :local speed "";
     :local upload "400K";
-    :local download "3M";
+    :local download "2M";
     :local valid false;
 
     :for attempt from=1 to=12 do={
@@ -30,9 +31,9 @@
     :if ($speed = "10M") do={ :set upload "1M"; :set download "10M"; :set valid true; }
 
     :if (!$valid) do={
-      :set speed "3M";
+      :set speed "2M";
       :set upload "400K";
-      :set download "3M";
+      :set download "2M";
     }
 
     :local target ($ip . "/32");
