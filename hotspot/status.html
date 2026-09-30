@@ -17,6 +17,8 @@
       bytesIn: "$(bytes-in)",
       bytesOut: "$(bytes-out)",
       limitBytesTotal: "$(limit-bytes-total)",
+      uptime: "$(uptime)",
+      sessionTimeLeft: "$(session-time-left)",
       refreshTimeoutSecs: "$(refresh-timeout-secs)",
       linkLogout: "$(link-logout)",
       linkLogin: "$(link-login)",
@@ -53,12 +55,12 @@
         <div class="status-card-grid">
           <div class="status-row"><strong>رقم الكرت</strong><span class="status-value" dir="ltr">$(username)</span></div>
           <div class="status-row"><strong>السرعة الحالية</strong><span class="status-value speed-current-value" id="currentSpeed">—</span></div>
-          <div class="status-row"><strong>التحميل</strong><span class="status-value" dir="ltr">$(bytes-out-nice)</span></div>
-          <div class="status-row"><strong>الرفع</strong><span class="status-value" dir="ltr">$(bytes-in-nice)</span></div>
+          <div class="status-row"><strong>التحميل</strong><span class="status-value" id="download">—</span></div>
+          <div class="status-row"><strong>الرفع</strong><span class="status-value" id="upload">—</span></div>
           <div class="status-row"><strong>الرصيد المستخدم</strong><span class="status-value" id="used">—</span></div>
           <div class="status-row"><strong>الرصيد المتبقي</strong><span class="status-value" id="remain">—</span></div>
-          <div class="status-row"><strong>الوقت المستهلك</strong><span class="status-value">$(uptime)</span></div>
-          <div class="status-row"><strong>الوقت المتبقي</strong><span class="status-value">$(session-time-left)</span></div>
+          <div class="status-row"><strong>الوقت المستهلك</strong><span class="status-value" id="uptime">—</span></div>
+          <div class="status-row"><strong>الوقت المتبقي</strong><span class="status-value" id="timeLeft">—</span></div>
         </div>
       </div>
 
