@@ -1,5 +1,55 @@
-$(if var == "")
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta http-equiv="pragma" content="no-cache"><meta http-equiv="expires" content="-1"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>NetPro | تم الدخول بنجاح</title><link rel="stylesheet" href="css/main.css"><script src="config.js"></script><script clear-hot-blocker></script><script>document.addEventListener('DOMContentLoaded',function(){try{localStorage.setItem('netpro_status_speed','$(domain)');var p=JSON.parse(localStorage.getItem('netpro_pending_reauth')||'null');if(p&&p.auto){localStorage.removeItem('netpro_pending_reauth');location.replace('$(link-status)');return}}catch(e){}setTimeout(function(){location.replace(unescape('$(link-redirect-esc)'))},50)})</script></head><body><main class="page-root"><section class="tab-content active"><div class="page-message glass-card"><div class="icon">✅</div><h1>تم تسجيل دخولك بنجاح</h1><p>جاري التحويل…</p><p><a href="$(link-status)">اضغط هنا</a></p></div></section></main></body></html>
-$(else)
-{"logged_in":"$(logged-in)","link_login_only":"$(link-login-only)","action":"onLoggedIn"}
-$(endif)
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="pragma" content="no-cache">
+  <meta http-equiv="expires" content="-1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>NetPro | تم الدخول بنجاح</title>
+  <link rel="stylesheet" href="css/main.css">
+  <script src="config.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var pending = null;
+      try {
+        pending = JSON.parse(sessionStorage.getItem('netpro_pending_reauth') || 'null');
+      } catch (e) {}
+
+      var target = '$(link-status)';
+      var isReauth = pending && pending.auto;
+
+      if (isReauth) {
+        try {
+          sessionStorage.removeItem('netpro_pending_reauth');
+          if ('$(domain)') localStorage.setItem('netpro_status_speed', '$(domain)');
+        } catch (e) {}
+
+        setTimeout(function () {
+          location.replace(target);
+        }, 1700);
+        return;
+      }
+
+      try {
+        if ('$(domain)') localStorage.setItem('netpro_status_speed', '$(domain)');
+      } catch (e) {}
+
+      setTimeout(function () {
+        location.replace(unescape('$(link-redirect-esc)'));
+      }, 100);
+    });
+  </script>
+</head>
+<body>
+  <main class="page-root">
+    <section class="tab-content active">
+      <div class="page-message glass-card">
+        <div class="icon">✅</div>
+        <h1>تم تسجيل دخولك بنجاح</h1>
+        <p>جاري تجهيز اتصالك بالسرعة المختارة…</p>
+        <p><a href="$(link-status)">فتح حالة الاتصال</a></p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
