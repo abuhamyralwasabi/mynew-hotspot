@@ -9,7 +9,7 @@
   /ip hotspot user profile add \
     name="NETPRO-SPEED" \
     rate-limit="" \
-    shared-users=1 \
+    shared-users=2 \
     add-mac-cookie=no \
     mac-cookie-timeout=0s \
     idle-timeout=10m \
@@ -18,3 +18,10 @@
 
 # Then paste routeros/speed2.rsc into:
 # IP -> HotSpot -> User Profiles -> NETPRO-SPEED -> Scripts -> On Login
+
+# Package architecture
+# Keep existing HotSpot user profiles untouched.
+# For new User Manager packages, keep traffic quota and validity in the
+# User Manager profile/limitation and avoid a fixed rate-limit here.
+# All new NetPro selectable-speed accounts should use this dynamic-speed
+# profile so the portal-selected speed remains authoritative.
