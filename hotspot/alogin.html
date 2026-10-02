@@ -18,7 +18,7 @@
 
       var target = '$(link-status)';
       var card = '$(username)';
-      var selectedSpeed = '$(domain)';
+      var selectedSpeed = '$(domain)' || ((pending || {}).speed || '');
 
       if (window.NETPRO_AUTH && card) {
         window.NETPRO_AUTH.rememberSuccess(card, selectedSpeed);
