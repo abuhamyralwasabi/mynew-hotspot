@@ -1,27 +1,35 @@
-# NetPro HotSpot Server Profile compatibility
-# RouterOS 6.49.19
+# NetPro unified HotSpot Server Profile — RouterOS 6.49.x
+# Target architecture:
+#   one Server Profile -> all NetPro HotSpot servers/VLAN interfaces
+#   one RADIUS/ User Manager source
+#   one common portal hostname
 #
+# Existing hsprof1/hsprof2 and their current users are NOT modified by this file.
+# Migrate only after the new profile has been tested.
+
+# Create the unified profile once:
+:if ([:len [/ip hotspot profile find where name="NETPRO-HOTSPOT"]] = 0) do={
+  /ip hotspot profile add \
+    name="NETPRO-HOTSPOT" \
+    dns-name="p.net" \
+    hotspot-address=192.168.100.101 \
+    html-directory="netpro" \
+    login-by=http-chap,http-pap \
+    use-radius=yes \
+    radius-interim-update=5m
+}
+
 # IMPORTANT:
-# Run these commands ONLY for HotSpot servers that are intended to use
-# the selectable-speed portal and the NETPRO-SPEED user profile.
+# Use the same NETPRO-HOTSPOT profile for every NetPro HotSpot server that
+# belongs to the same roaming domain.
 #
-# The supplied configuration currently has hsprof1 and hsprof2 with:
-# cookie,http-chap,http-pap,mac-cookie
+# The hotspot-address above is only a template based on the supplied export.
+# If the final unified HotSpot service is moved to another gateway address,
+# replace it with the actual address used by your chosen HotSpot server.
 #
-# Cookie/mac-cookie can allow a client to authenticate without returning
-# through the speed-selection page. For deterministic portal-selected speed,
-# use only HTTP CHAP/PAP on the dedicated server profile.
-#
-# Option A (ONLY if hsprof1 and hsprof2 are exclusively for this portal):
-#/ip hotspot profile
-#set [find name="hsprof1"] login-by=http-chap,http-pap
-#set [find name="hsprof2"] login-by=http-chap,http-pap
-#
-# Option B (recommended when existing users/services depend on cookies):
-# Clone the server profile(s), set login-by=http-chap,http-pap on the clones,
-# keep html-directory=netpro, then assign only the selectable-speed HotSpot
-# servers to the clones.
+# After the profile exists, assign it to the desired HotSpot servers in
+# /ip hotspot servers. Do not change existing production servers until tested.
 #
 # Verify:
-#/ip hotspot profile print detail where name="hsprof1"
-/ip hotspot profile print detail where name="hsprof2"
+# /ip hotspot profile print detail where name="NETPRO-HOTSPOT"
+# /ip hotspot server print detail
