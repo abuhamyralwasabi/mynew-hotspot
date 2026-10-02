@@ -51,23 +51,11 @@ body{font-size:var(--fs-base)}
 .tips-box{font-size:12px}
 footer{font-size:11px}
 .footer-brand{font-size:13px}
-
-/* One portal for every speed picker; never trapped by a card/form stacking context. */
-.speed-picker > .speed-picker-menu{display:none!important}
-.speed-picker-portal{
-  position:fixed!important;
-  inset:auto!important;
-  z-index:10000!important;
-  margin:0!important;
-  max-height:min(320px,55vh)!important;
-  overflow:auto!important;
-}
-@media(max-width:420px){
-  .tab-btn{font-size:12px}
-  .logo-title{font-size:19px}
-  .speed-option{font-size:14px}
-}
-@media(max-width:340px){
-  .tab-btn{font-size:12px}
-  .speed-option{font-size:14px}
-}
+/* Final speed-picker layout: menu stays inside its picker, so login and status share one reliable DOM path. */
+.speed-picker{position:relative;z-index:70;isolation:isolate;overflow:visible}
+.speed-picker > .speed-picker-menu{display:none}
+.speed-picker.open > .speed-picker-menu{display:grid!important}
+.speed-picker.open-up > .speed-picker-menu{top:auto;bottom:calc(100% + 6px)}
+.speed-picker-menu{z-index:500;visibility:visible;pointer-events:auto}
+.speed-picker-menu[hidden]{display:none!important}
+.speed-picker > .speed-picker-menu .speed-option{position:relative;z-index:1}
