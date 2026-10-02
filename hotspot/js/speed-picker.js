@@ -3,7 +3,6 @@
 
   var c = window.NETPRO_CONFIG || {};
   var instances = [];
-  var portal = null;
   var activeInstance = null;
 
   function esc(value) {
@@ -28,150 +27,151 @@
     return ((c.speeds || [])[0] || {}).value || '';
   }
 
-  function ensurePortal() {
-    if (portal) return portal;
-
-    portal = document.createElement('div');
-    portal.id = 'netproSpeedPortal';
-    portal.className = 'speed-picker-menu speed-picker-portal';
-    portal.setAttribute('role', 'listbox');
-    portal.hidden = true;
-    document.body.appendChild(portal);
-
-    portal.onclick = function (event) {
-      var option = event.target.closest ? event.target.closest('.speed-option') : null;
-      if (!option || !activeInstance) return;
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      activeInstance.select.value = option.getAttribute('data-speed-value') || '';
-      activeInstance.select.dispatchEvent(new Event('change', { bubbles: true }));
-      activeInstance.sync();
-      close(activeInstance);
-    };
-
-    return portal;
+  function findLabel(value) {
+    var list = c.speeds || [];
+    for (var i = 0; i < list.length; i++) {
+      if (String(list[i].value) === String(value)) {
+        return list[i].label || list[i].value;
+      }
+    }
+    return value || '';
   }
 
-  function renderOptions(instance) {
-    var p = ensurePortal();
+  function syncOptions(instance) {
+    var menu = instance.menu;
+    if (!menu) return;
 
-    p.innerHTML = (c.speeds || []).map(function (item) {
+    var selected = String(instance.select.value || '');
+    menu.querySelectorAll('.speed-option').forEach(function (option) {
+      var active = String(option.getAttribute('data-speed-value') || '') === selected;
+      option.classList.toggle('active', active);
+      option.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+  }
+
+  function sync(instance) {
+    var selected = valueExists(instance.select.value) ? instance.select.value : fallbackSpeed();
+    instance.select.value = selected;
+
+    var labelNode = instance.trigger.querySelector('[data-speed-label]');
+    if (labelNode) labelNode.textContent = findLabel(selected);
+
+    syncOptions(instance);
+  }
+
+  function close(instance) {
+    if (!instance) return;
+
+    instance.wrapper.classList.remove('open', 'open-up');
+    instance.trigger.setAttribute('aria-expanded', 'false');
+    instance.menu.hidden = true;
+
+    if (activeInstance === instance) activeInstance = null;
+  }
+
+  function closeActive(except) {
+    if (activeInstance && activeInstance !== except) close(activeInstance);
+  }
+
+  function chooseDirection(instance) {
+    var rect = instance.trigger.getBoundingClientRect();
+    var availableBelow = window.innerHeight - rect.bottom - 12;
+    var availableAbove = rect.top - 12;
+    var menuHeight = Math.min(
+      320,
+      Math.max(140, Math.floor(window.innerHeight * 0.55))
+    );
+
+    instance.wrapper.classList.toggle(
+      'open-up',
+      availableBelow < Math.min(menuHeight, 260) && availableAbove > availableBelow
+    );
+  }
+
+  function open(instance) {
+    closeActive(instance);
+    activeInstance = instance;
+
+    sync(instance);
+    chooseDirection(instance);
+
+    instance.menu.hidden = false;
+    instance.wrapper.classList.add('open');
+    instance.trigger.setAttribute('aria-expanded', 'true');
+  }
+
+  function render(instance) {
+    instance.menu.innerHTML = (c.speeds || []).map(function (item) {
       return '<button type="button" class="speed-option" role="option" data-speed-value="' +
         esc(item.value) + '"><span>' + esc(item.label || item.value) +
         '</span><b dir="ltr">' + esc(item.value) + '</b></button>';
     }).join('');
 
-    instance.sync();
-  }
-
-  function position(instance) {
-    var p = ensurePortal();
-    if (p.hidden) return;
-
-    var rect = instance.trigger.getBoundingClientRect();
-    var pad = 8;
-    var gap = 6;
-    var width = rect.width;
-    var left = Math.max(pad, Math.min(rect.left, window.innerWidth - width - pad));
-
-    p.style.width = width + 'px';
-    p.style.left = left + 'px';
-    p.style.visibility = 'hidden';
-    p.style.display = 'grid';
-
-    var height = p.offsetHeight;
-    var top = rect.bottom + gap;
-
-    if (top + height > window.innerHeight - pad && rect.top > height + gap) {
-      top = rect.top - height - gap;
-    }
-
-    p.style.top = Math.max(pad, top) + 'px';
-    p.style.visibility = 'visible';
-  }
-
-  function close(instance) {
-    var p = ensurePortal();
-    p.hidden = true;
-    p.style.display = 'none';
-    p.style.visibility = 'hidden';
-
-    if (activeInstance === instance) activeInstance = null;
-
-    instance.wrapper.classList.remove('open');
-    instance.trigger.setAttribute('aria-expanded', 'false');
-  }
-
-  function open(instance) {
-    var p = ensurePortal();
-
-    if (activeInstance && activeInstance !== instance) {
-      close(activeInstance);
-    }
-
-    activeInstance = instance;
-    instance.sync();
-
-    p.hidden = false;
-    instance.wrapper.classList.add('open');
-    instance.trigger.setAttribute('aria-expanded', 'true');
-    position(instance);
+    sync(instance);
   }
 
   function create(wrapper) {
     var select = wrapper.querySelector('select');
     var trigger = wrapper.querySelector('[data-speed-trigger]');
+    var menu = wrapper.querySelector('[data-speed-menu]');
 
-    if (!select || !trigger) return null;
+    if (!select || !trigger || !menu) return null;
     if (wrapper.__netproSpeedPicker) return wrapper.__netproSpeedPicker;
 
     select.innerHTML = (c.speeds || []).map(function (item) {
       return '<option value="' + esc(item.value) + '">' +
         esc(item.label || item.value) + '</option>';
     }).join('');
-
     select.hidden = true;
     select.setAttribute('aria-hidden', 'true');
+
+    menu.hidden = true;
+    menu.setAttribute('aria-label', menu.getAttribute('aria-label') || 'سرعات الاتصال');
 
     var instance = {
       wrapper: wrapper,
       select: select,
       trigger: trigger,
-      sync: function () {
-        var selected = valueExists(select.value) ? select.value : fallbackSpeed();
-        select.value = selected;
-
-        var labelNode = trigger.querySelector('[data-speed-label]');
-        var label = selected;
-        for (var i = 0; i < (c.speeds || []).length; i++) {
-          if (String(c.speeds[i].value) === String(selected)) {
-            label = c.speeds[i].label || c.speeds[i].value;
-            break;
-          }
-        }
-
-        if (labelNode) labelNode.textContent = label;
-
-        if (portal) {
-          portal.querySelectorAll('.speed-option').forEach(function (option) {
-            var active = option.getAttribute('data-speed-value') === selected;
-            option.classList.toggle('active', active);
-            option.setAttribute('aria-selected', active ? 'true' : 'false');
-          });
-        }
-      }
+      menu: menu
     };
 
-    renderOptions(instance);
+    render(instance);
 
-    trigger.onclick = function (event) {
+    trigger.addEventListener('click', function (event) {
       event.preventDefault();
       event.stopPropagation();
+
       if (wrapper.classList.contains('open')) close(instance);
       else open(instance);
-    };
+    });
+
+    trigger.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' || event.key === ' ' || event.key === 'ArrowDown') {
+        event.preventDefault();
+        open(instance);
+      }
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        close(instance);
+      }
+    });
+
+    menu.addEventListener('click', function (event) {
+      var option = event.target.closest ? event.target.closest('.speed-option') : null;
+      if (!option) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      var value = option.getAttribute('data-speed-value') || '';
+      if (!valueExists(value)) return;
+
+      instance.select.value = value;
+      instance.select.dispatchEvent(new Event('change', { bubbles: true }));
+      sync(instance);
+      close(instance);
+      instance.trigger.focus();
+    });
 
     wrapper.__netproSpeedPicker = instance;
     instances.push(instance);
@@ -182,22 +182,17 @@
     document.querySelectorAll('.speed-picker').forEach(create);
 
     document.addEventListener('click', function (event) {
-      if (activeInstance &&
-          event.target !== activeInstance.trigger &&
-          !activeInstance.trigger.contains(event.target) &&
-          portal &&
-          !portal.contains(event.target)) {
-        close(activeInstance);
-      }
+      if (!activeInstance) return;
+      if (!activeInstance.wrapper.contains(event.target)) close(activeInstance);
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && activeInstance) close(activeInstance);
     });
 
     window.addEventListener('resize', function () {
-      if (activeInstance) position(activeInstance);
+      if (activeInstance) chooseDirection(activeInstance);
     });
-
-    window.addEventListener('scroll', function () {
-      if (activeInstance) position(activeInstance);
-    }, true);
   }
 
   document.addEventListener('DOMContentLoaded', init);
@@ -212,8 +207,9 @@
     setValue: function (select, value) {
       var instance = this.get(select);
       if (!instance) return false;
+
       if (valueExists(value)) select.value = value;
-      instance.sync();
+      sync(instance);
       return true;
     },
     getValue: function (select) {
@@ -221,7 +217,7 @@
       return instance ? instance.select.value : '';
     },
     close: function () {
-      if (activeInstance) close(activeInstance);
+      closeActive(null);
     }
   };
 })();
