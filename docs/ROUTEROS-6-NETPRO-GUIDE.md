@@ -579,3 +579,165 @@ routeros/dual-wan-yemennet.rsc
 - Load Balancing: https://help.mikrotik.com/docs/spaces/ROS/pages/4390920/Load%20Balancing
 - Per Connection Classifier: https://help.mikrotik.com/docs/spaces/ROS/pages/152600617/Per%20connection%20classifier
 - User Manager: https://help.mikrotik.com/docs/spaces/ROS/pages/2555940/User%2BManager
+
+
+---
+
+# 15. NetPro automatic roaming between APs/VLANs
+
+The portal now keeps only the last successfully authenticated username and the
+last selected speed in browser storage. No password is stored.
+
+When the client moves from AP01/VLAN101 to AP02/VLAN102, both networks must
+point to the SAME HotSpot Server Profile and the same portal hostname/origin.
+Web Storage is isolated by browser origin, so p.net and another hostname do
+not share localStorage.
+
+The login page uses the current RouterOS CHAP challenge on the new VLAN and
+submits the saved username again. The previous IP address is never reused.
+
+The flow is:
+
+AP01 -> successful login -> alogin.html -> save username/speed
+
+AP02 -> login.html -> read saved username -> one automatic login attempt ->
+new CHAP response -> alogin.html -> status.html
+
+A failed automatic attempt is marked for the current browser session so the
+page does not create an automatic-login loop. The user can still use the
+normal login form or the "دخول بآخر كرت" button.
+
+## Important: same-origin requirement
+
+Use one DNS name for the unified HotSpot Server Profile, for example:
+
+p.net
+
+Do not let one VLAN use p.net while another uses P.com or a router IP if
+you expect browser storage to roam with the client.
+
+MikroTik allows a HotSpot server profile to define the DNS name and the HTML
+directory. The portal should keep the same html-directory=netpro and one
+common login hostname.
+
+---
+
+# 16. Existing user profiles must remain untouched
+
+Do NOT modify or delete the current profiles used by printed cards.
+
+The current export contains many profiles with fixed rate-limit values. They
+are intentionally left intact so existing subscribers keep their current
+service.
+
+The new NetPro architecture is separate:
+
+* Existing printed-card profiles: unchanged.
+* New selectable-speed accounts: use NETPRO-SPEED.
+* Package amount/traffic quota and validity: define through the new User
+  Manager profiles/limitations.
+* NETPRO-SPEED must not carry a fixed rate-limit.
+
+For the new roaming accounts, shared-users=2 is used so a short overlap
+between the old AP session and the new AP authentication does not block the
+new login immediately. The portal then stores only the successful username and
+speed.
+
+Before production, decide whether the new package policy should permit shared
+use beyond this short roaming overlap. Do not change existing profiles to
+achieve that behavior.
+
+---
+
+# 17. One Server Profile for all VLANs
+
+After you finish the router cleanup, use one HotSpot Server Profile for all
+the VLAN HotSpot servers.
+
+Recommended target:
+
+NETPRO-HOTSPOT
+
+Recommended portal-related properties:
+
+* html-directory=netpro
+* one common dns-name
+* use-radius=yes
+* login-by=http-chap,http-pap for selectable-speed accounts
+
+The existing hsprof1 and hsprof2 should not be modified until all current
+users and services depending on them have been migrated and tested.
+
+---
+
+# 18. Last-card button vs. automatic roaming
+
+Both paths now use the same authentication engine.
+
+Automatic roaming:
+- triggered by a new login page after the client moves to another VLAN/AP;
+- reads the last successful username;
+- uses the current CHAP challenge;
+- performs one attempt only.
+
+"دخول بآخر كرت":
+- triggered by the user;
+- reads the same saved username;
+- uses the same selected speed;
+- performs the same authentication path.
+
+This removes the old duplicate logic that previously made the two paths behave
+differently.
+
+---
+
+# 19. Speed picker architecture
+
+The login and status pages now use one shared speed-picker.js.
+
+There is one fixed-position popup attached to the document body instead of
+separate menus trapped inside cards/forms.
+
+This prevents clipping and stacking-context failures caused by overflow,
+backdrop-filter, and nested z-index contexts.
+
+Do not add a second speed picker implementation to login.js or status.js.
+
+---
+
+# 20. Logout behavior
+
+A normal user logout does NOT erase the saved username.
+
+It only disables automatic roaming until the next successful login.
+
+Therefore:
+
+Normal Logout:
+  saved username remains
+  automatic login becomes disabled
+
+Successful manual login:
+  saved username is refreshed
+  automatic login becomes enabled again
+
+Successful speed-change re-login:
+  pending re-authentication is cleared
+  saved username/speed are refreshed
+  automatic login remains enabled
+
+This distinction prevents a manual logout from immediately causing the user to
+be logged back in when the login page is shown.
+
+---
+
+# 21. Browser storage fallback
+
+The portal uses localStorage plus a first-party cookie fallback for the last
+username/speed.
+
+Storage is still origin-scoped. The fallback does not make different
+hostnames share storage.
+
+For that reason, unified DNS naming on the router remains mandatory for true
+AP/VLAN roaming.
