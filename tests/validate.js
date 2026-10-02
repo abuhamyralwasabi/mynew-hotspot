@@ -47,6 +47,7 @@ const app = fs.readFileSync(path.join(root,'hotspot/js/app.js'),'utf8');
 if (app.includes('function speeds(') || app.includes('HS_RENDER')) errors.push('app.js still contains duplicate speed picker logic');
 const statusHtml = fs.readFileSync(path.join(root,'hotspot/status.html'),'utf8');
 if (!statusHtml.includes('js/speed-picker.js')) errors.push('status.html missing speed-picker.js');
+if (!statusHtml.includes('data-speed-trigger') || !statusHtml.includes('data-speed-menu')) errors.push('status.html speed picker markup is incomplete');
 if (app.includes('NetPro-Logo.png')) errors.push('app.js references missing PNG logo');
 if (!fs.existsSync(path.join(root,'hotspot/imgs/NetPro-Logo.svg'))) errors.push('SVG logo asset missing');
 const speed2 = fs.readFileSync(path.join(root,'routeros/speed2.rsc'),'utf8');
@@ -59,3 +60,6 @@ if (!loginJs.includes('startAutoLogin') || !loginJs.includes('startPendingReauth
 
 if (errors.length) { console.error(errors.join('\n')); process.exit(1); }
 console.log('NetPro validation passed:', config.speeds.length, 'speeds; all JS syntax checks passed.');
+const pickerJs = fs.readFileSync(path.join(root,'hotspot/js/speed-picker.js'),'utf8');
+if (pickerJs.includes('netproSpeedPortal') || pickerJs.includes('speed-picker-portal')) errors.push('speed picker must use the local menu, not a detached portal');
+if (!pickerJs.includes("wrapper.querySelector('[data-speed-menu]')")) errors.push('speed picker must bind the local menu element');
