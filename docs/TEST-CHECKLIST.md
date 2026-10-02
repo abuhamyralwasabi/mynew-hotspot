@@ -35,3 +35,21 @@
 - Without byte quota, UI does not fabricate a 1-byte limit
 - Download uses `bytes-out`, upload uses `bytes-in`
 - Status refresh only while visible
+
+
+## Browser roaming / shared authentication
+- Successful login saves only username and selected speed; password is never saved.
+- AP01/VLAN101 -> AP02/VLAN102: login page performs one automatic re-login.
+- AP02/VLAN102 -> AP01/VLAN101: same behavior.
+- Different VLANs use the same HotSpot Server Profile and DNS origin.
+- Manual logout disables automatic roaming while retaining the last username.
+- "دخول بآخر كرت" authenticates using the same engine as automatic roaming.
+- Auto-login failure does not loop or repeatedly submit.
+- A manual username/speed interaction cancels a pending automatic attempt.
+
+## Shared speed picker
+- Login speed button opens the fixed portal menu above content.
+- Status speed button opens the same shared menu.
+- Selecting a speed updates the hidden domain field.
+- Only one speed-picker portal exists in the document.
+- No old duplicate renderer remains in app.js.
