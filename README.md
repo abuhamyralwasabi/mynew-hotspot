@@ -36,3 +36,18 @@ The official MikroTik HotSpot documentation describes `domain` as a client varia
 ## Speed transport prerequisite
 
 The current `speed2` implementation reads `/ip hotspot active` -> `domain`. MikroTik documents that `active.domain` represents a user domain when username/domain splitting is used and notes that this property is used with RADIUS authentication. Therefore, this speed transport must be verified on the target RouterOS 6 setup (especially when local HotSpot users are used) before production deployment. If the router does not populate `active.domain`, the portal must switch to a different transport rather than silently relying on it.
+
+
+## Unified portal architecture
+
+- One shared Speed Picker component is used by login and status.
+- Last successfully authenticated username/speed are stored in a shared browser-auth state.
+- Passwords are never stored.
+- Login automatically attempts the last successful username after roaming to another
+  VLAN/AP under the same HotSpot DNS origin.
+- The same authentication engine powers both automatic roaming and the "last card"
+  button.
+- Manual logout disables automatic roaming but keeps the saved username for the button.
+- Existing printed-card HotSpot user profiles are intentionally left untouched.
+- New selectable-speed accounts use the dedicated NETPRO-SPEED profile; package
+  quota/validity remains a separate User Manager concern.
