@@ -36,6 +36,8 @@ for (const file of htmlFiles) {
     if (!html.includes('js/md5.js')) errors.push('login.html missing md5.js');
     if (!html.includes('js/auth.js') || !html.includes('js/speed-picker.js')) errors.push('login.html missing shared auth/speed modules');
     if (html.includes('performanceToggle')) errors.push('performance mode control must be removed');
+    if (!html.includes('js/speed-picker.js')) errors.push('login.html missing speed-picker.js');
+
   }
 }
 for (const required of ['auth.js','speed-picker.js']) {
@@ -43,6 +45,8 @@ for (const required of ['auth.js','speed-picker.js']) {
 }
 const app = fs.readFileSync(path.join(root,'hotspot/js/app.js'),'utf8');
 if (app.includes('function speeds(') || app.includes('HS_RENDER')) errors.push('app.js still contains duplicate speed picker logic');
+const statusHtml = fs.readFileSync(path.join(root,'hotspot/status.html'),'utf8');
+if (!statusHtml.includes('js/speed-picker.js')) errors.push('status.html missing speed-picker.js');
 if (app.includes('NetPro-Logo.png')) errors.push('app.js references missing PNG logo');
 if (!fs.existsSync(path.join(root,'hotspot/imgs/NetPro-Logo.svg'))) errors.push('SVG logo asset missing');
 const speed2 = fs.readFileSync(path.join(root,'routeros/speed2.rsc'),'utf8');
@@ -51,6 +55,7 @@ if (!speed2.includes('/ip hotspot active') || !speed2.includes('/queue simple ad
 const loginJs = fs.readFileSync(path.join(root,'hotspot/js/login.js'),'utf8');
 if (!loginJs.includes('NETPRO_AUTH') || !loginJs.includes('autoAttempted')) errors.push('login.js missing shared auto-login engine');
 if (loginJs.includes('performanceToggle')) errors.push('login.js still references performance mode');
+if (!loginJs.includes('startAutoLogin') || !loginJs.includes('startPendingReauth')) errors.push('login.js missing auto-login paths');
 
 if (errors.length) { console.error(errors.join('\n')); process.exit(1); }
 console.log('NetPro validation passed:', config.speeds.length, 'speeds; all JS syntax checks passed.');
