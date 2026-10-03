@@ -23,16 +23,21 @@
   </main>
 
   <script>
-    (function () {
+    document.addEventListener('DOMContentLoaded', function () {
       var errorNode = document.getElementById('routerError');
       var error = errorNode ? errorNode.textContent : '';
       var target = '$(link-login)';
       var separator = target.indexOf('?') >= 0 ? '&' : '?';
 
-      if (error && target) {
-        location.replace(target + separator + 'hs_error=' + encodeURIComponent(error));
+      // hot-blocker.js runs first and may redirect to block.html.
+      // Only return to the login page when the client is not blocked.
+      var blocked = String(document.cookie || '').indexOf('netpro_blocked_at=') >= 0;
+      if (!blocked && error && target) {
+        setTimeout(function () {
+          location.replace(target + separator + 'hs_error=' + encodeURIComponent(error));
+        }, 30);
       }
-    })();
+    });
   </script>
 </body>
 </html>
