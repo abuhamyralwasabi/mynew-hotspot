@@ -148,6 +148,39 @@
     write(state);
   }
 
+  function clearCookie(name) {
+    try {
+      document.cookie = name + '=; Max-Age=0; Path=/; SameSite=Lax';
+    } catch (e) {}
+  }
+
+  function finalLogout() {
+    var state = read();
+    var username = state ? state.username : '';
+
+    try {
+      localStorage.removeItem(STATE_KEY);
+      localStorage.removeItem(LEGACY_CARD_KEY);
+      localStorage.removeItem('netpro_status_speed');
+      if (username) localStorage.removeItem('netpro_status_speed:' + username);
+      if (username) {
+        var h = history();
+        h.cards = h.cards.filter(function (item) {
+          return item && item.card !== username;
+        });
+        localStorage.setItem(LEGACY_HISTORY_KEY, JSON.stringify(h));
+      }
+    } catch (e) {}
+
+    clearCookie(COOKIE_KEY);
+    clearCookie(COOKIE_SPEED);
+
+    try {
+      sessionStorage.removeItem('netpro_auto_login_attempt_v2');
+      sessionStorage.removeItem('netpro_pending_reauth');
+    } catch (e) {}
+  }
+
   function clearAutoAttempt() {
     try { sessionStorage.removeItem('netpro_auto_login_attempt_v2'); } catch (e) {}
   }
@@ -185,6 +218,7 @@
     },
     rememberSuccess: rememberSuccess,
     setAutoLogin: setAutoLogin,
+    finalLogout: finalLogout,
     clearAutoAttempt: clearAutoAttempt,
     markAutoAttempt: markAutoAttempt,
     autoAttempted: autoAttempted,
