@@ -18,6 +18,39 @@
     catch (e) { return fallback; }
   }
 
+  function queryValue(name) {
+    try {
+      return new URLSearchParams(location.search).get(name) || '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function getRawError() {
+    return ctx.error || queryValue('hs_error') || '';
+  }
+
+  function renderLoginError() {
+    var box = document.getElementById('loginError');
+    var raw = getRawError();
+    if (!box || !raw) return;
+
+    var message = typeof window.toArabicError === 'function'
+      ? window.toArabicError(raw)
+      : 'تعذر تسجيل الدخول. يرجى المحاولة مرة أخرى.';
+
+    box.textContent = message;
+    box.hidden = false;
+
+    var hint = document.getElementById('loginHint');
+    if (hint) hint.textContent = '⚠️ يرجى التحقق من رمز الكرت والمحاولة مرة أخرى';
+  }
+
+  function credentialPassword(username) {
+    var mode = c.auth && c.auth.passwordMode ? c.auth.passwordMode : 'username';
+    return mode === 'blank' ? '' : username;
+  }
+
   function validSpeed(value) {
     var list = c.speeds || [];
     for (var i = 0; i < list.length; i++) {
@@ -131,7 +164,7 @@
 
     var username = (input.value || '').trim();
     var selectedSpeed = validSpeed(speed.value);
-    var rawPassword = password ? (password.value || '') : '';
+    var rawPassword = credentialPassword(username);
 
     if (!username || !selectedSpeed) {
       if (!username) input.focus();
@@ -139,6 +172,8 @@
     }
 
     speed.value = selectedSpeed;
+    if (password) password.value = rawPassword;
+
     if (window.NETPRO_SPEED_PICKER) {
       window.NETPRO_SPEED_PICKER.setValue(speed, selectedSpeed);
     }
@@ -157,6 +192,7 @@
 
     if (form) {
       form.querySelector('input[name="username"]').value = username;
+      form.querySelector('input[name="password"]').value = rawPassword;
       form.querySelector('input[name="domain"]').value = selectedSpeed;
     }
 
@@ -216,9 +252,10 @@
     var isReauth = query && query.get('hs_relogin') === '1';
     var pending = pendingState();
 
-    if (ctx.error) {
+    if (ctx.error || queryValue('hs_error')) {
       clearPending();
       if (window.NETPRO_AUTH) window.NETPRO_AUTH.clearAutoAttempt();
+      manualInteraction = true;
       return;
     }
 
@@ -245,6 +282,8 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
+    renderLoginError();
+
     if (!form || !input || !speed) return;
 
     renderHistory();
@@ -310,10 +349,12 @@
     }
 
     form.addEventListener('submit', function (event) {
-      if (ctx.chapId) {
-        event.preventDefault();
-        doLogin({ autoAttempt: false });
-      }
+      event.preventDefault();
+      doLogin({ autoAttempt: false });
+
+      // Without CHAP the browser must submit the form itself after the
+      // hidden credentials have been populated.
+      if (!ctx.chapId) form.submit();
     });
 
     document.addEventListener('click', function (event) {
