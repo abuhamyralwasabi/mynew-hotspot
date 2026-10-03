@@ -9,9 +9,17 @@
 - Input/select remain at least 16px on iOS
 - Reduced-motion behavior
 
+## Card-only authentication
+- Test card account has the same value in username and password (the portal has no visible password field).
+- Verify HTTP-PAP sends the card code as the hidden password.
+- Verify HTTP-CHAP hashes the card code with the current CHAP challenge.
+- Verify a wrong/nonexistent card shows an Arabic error on the failure login page.
+- Verify `already authorizing, retry later` is shown as a transient Arabic message and does not increase the login-block counter.
+
 ## RouterOS 6
 - HTTP-CHAP login
 - HTTP-PAP login
+- `split-user-domain=yes` on the unified Server Profile
 - Verify `domain=256K ... 10M` reaches the active session
 - Verify `speed2` creates one queue per IP
 - Verify upload/download limits
@@ -48,8 +56,8 @@
 - A manual username/speed interaction cancels a pending automatic attempt.
 
 ## Shared speed picker
-- Login speed button opens the fixed portal menu above content.
-- Status speed button opens the same shared menu.
+- Login speed button opens the local dropdown menu without clipping.
+- Status speed button opens the local dropdown menu without clipping.
 - Selecting a speed updates the hidden domain field.
-- Only one speed-picker portal exists in the document.
+- No detached speed-picker portal exists.
 - No old duplicate renderer remains in app.js.
