@@ -10,6 +10,11 @@ window.NETPRO_CONFIG = {
     footerBrand: "🔥 Netpro – تجربة كاملة",
     footerText: "تصميم قسم الـ IT نت برو"
   },
+  auth: {
+    // This portal exposes one card-code field. The same code is therefore
+    // used as the HotSpot password for card accounts.
+    passwordMode: "username"
+  },
   router: {
     model: "RB1100Dx4",
     routerOs: "6.49.19",
