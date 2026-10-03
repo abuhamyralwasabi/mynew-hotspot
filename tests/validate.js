@@ -73,3 +73,8 @@ if (!ui.includes('invalid username or password') || !ui.includes('already author
 const blocker = fs.readFileSync(path.join(root,'hotspot/js/hot-blocker.js'),'utf8');
 if (!blocker.includes('isTransientError')) errors.push('hot-blocker.js must ignore transient authorization errors');
 if (!fs.existsSync(path.join(root,'hotspot','flogin.html'))) errors.push('Missing canonical HotSpot failure page: flogin.html');
+
+const serverProfile = fs.readFileSync(path.join(root,'routeros/netpro-hotspot-server-profile.rsc'),'utf8');
+if (!serverProfile.includes('split-user-domain=yes')) errors.push('unified Server Profile must enable split-user-domain=yes');
+
+if (!fs.existsSync(path.join(root,'routeros/netpro-test-user.rsc'))) errors.push('Missing NetPro disposable test-user script');
