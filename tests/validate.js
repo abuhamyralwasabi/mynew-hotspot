@@ -63,3 +63,13 @@ console.log('NetPro validation passed:', config.speeds.length, 'speeds; all JS s
 const pickerJs = fs.readFileSync(path.join(root,'hotspot/js/speed-picker.js'),'utf8');
 if (pickerJs.includes('netproSpeedPortal') || pickerJs.includes('speed-picker-portal')) errors.push('speed picker must use the local menu, not a detached portal');
 if (!pickerJs.includes("wrapper.querySelector('[data-speed-menu]')")) errors.push('speed picker must bind the local menu element');
+
+const configAuth = config && config.auth;
+if (!configAuth || configAuth.passwordMode !== 'username') errors.push('auth.passwordMode must be username for the one-field card portal');
+const loginSource = fs.readFileSync(path.join(root,'hotspot/js/login.js'),'utf8');
+if (!loginSource.includes('credentialPassword') || !loginSource.includes('renderLoginError') || !loginSource.includes('hs_error')) errors.push('login.js card auth/error handling is incomplete');
+const ui = fs.readFileSync(path.join(root,'hotspot/js/ui-utils.js'),'utf8');
+if (!ui.includes('invalid username or password') || !ui.includes('already authorizing')) errors.push('ui-utils.js must map core RouterOS authentication errors');
+const blocker = fs.readFileSync(path.join(root,'hotspot/js/hot-blocker.js'),'utf8');
+if (!blocker.includes('isTransientError')) errors.push('hot-blocker.js must ignore transient authorization errors');
+if (!fs.existsSync(path.join(root,'hotspot','flogin.html'))) errors.push('Missing canonical HotSpot failure page: flogin.html');
