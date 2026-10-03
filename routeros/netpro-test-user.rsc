@@ -7,4 +7,4 @@
   /ip hotspot user remove [find where name="1234567890"];
 }
 
-/ip hotspot user add   name="1234567890"   password="1234567890"   profile="NETPRO-SPEED"   comment="NetPro test card - blank password"
+/ip hotspot user add   name="1234567890"   password=""   profile="NETPRO-SPEED"   comment="NetPro test card - blank password"
