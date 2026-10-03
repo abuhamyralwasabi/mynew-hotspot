@@ -176,6 +176,9 @@
     speed.value = selectedSpeed;
     if (password) password.value = rawPassword;
 
+    var usesRadius = !!(c.router && c.router.usesRadius);
+    // MikroTik separates/uses the HotSpot domain as a RADIUS user-domain.
+    // On a local-only router, sending domain causes user@domain lookup.
     if (window.NETPRO_SPEED_PICKER) {
       window.NETPRO_SPEED_PICKER.setValue(speed, selectedSpeed);
     }
@@ -183,7 +186,7 @@
     if (sendin && ctx.chapId) {
       sendin.username.value = username;
       sendin.password.value = hexMD5(ctx.chapId + rawPassword + ctx.chapChallenge);
-      sendin.domain.value = selectedSpeed;
+      sendin.domain.value = usesRadius ? selectedSpeed : '';
       sendin.dst.value = getDestination();
       if (options.autoAttempt && window.NETPRO_AUTH) {
         window.NETPRO_AUTH.markAutoAttempt();
@@ -195,7 +198,7 @@
     if (form) {
       form.querySelector('input[name="username"]').value = username;
       form.querySelector('input[name="password"]').value = rawPassword;
-      form.querySelector('input[name="domain"]').value = selectedSpeed;
+      form.querySelector('input[name="domain"]').value = usesRadius ? selectedSpeed : '';
     }
 
     return true;
