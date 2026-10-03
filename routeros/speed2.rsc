@@ -4,7 +4,8 @@
 # Prerequisite:
 # - HotSpot server profile must use http-chap,http-pap for selectable-speed users.
 # - RADIUS must be enabled (the supplied router export already uses use-radius=yes).
-# - The portal sends the selected speed as domain=<speed>.
+# - The portal sends the selected speed as domain=<speed> only when RADIUS is enabled.
+# - Local-only HotSpot testing intentionally leaves domain empty.
 #
 # The script intentionally creates only ONE Simple Queue per active client.
 # It uses max-limit only; it does not reserve limit-at bandwidth.
@@ -42,7 +43,7 @@
       :set speed "2M";
       :set upload "400K";
       :set download "2M";
-      :log warning ("NetPro speed: invalid or empty domain; fallback to 2M | user=" . $username);
+      :log warning ("NetPro speed: domain unavailable or invalid; fallback to 2M | user=" . $username);
     }
 
     :local target ($ip . "/32");
