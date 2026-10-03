@@ -92,3 +92,22 @@ const loginTransport = fs.readFileSync(path.join(root,'hotspot/js/login.js'),'ut
 if (!loginTransport.includes('usesRadius ? selectedSpeed :')) errors.push('login.js must suppress domain transport on local-only routers');
 const speedTransport = fs.readFileSync(path.join(root,'routeros/speed2.rsc'),'utf8');
 if (!speedTransport.includes('domain unavailable or invalid')) errors.push('speed2.rsc must keep an explicit domain fallback log');
+
+const statusFinal = fs.readFileSync(path.join(root,'hotspot/status.html'),'utf8');
+if (!statusFinal.includes('netpro-final=1') || !statusFinal.includes('erase-cookie=on')) errors.push('status.html final logout action is incomplete');
+if (!statusFinal.includes('تسجيل الخروج نهائيًا من الكرت الحالي')) errors.push('status.html final logout label is missing');
+
+const logoutSourceFinal = fs.readFileSync(path.join(root,'hotspot/js/logout.js'),'utf8');
+if (!logoutSourceFinal.includes("query('netpro-final') === '1'") || !logoutSourceFinal.includes('finalLogout')) errors.push('logout.js final logout path is incomplete');
+
+const authSourceFinal = fs.readFileSync(path.join(root,'hotspot/js/auth.js'),'utf8');
+if (!authSourceFinal.includes('function finalLogout()')) errors.push('auth.js missing finalLogout');
+if (!authSourceFinal.includes("localStorage.removeItem(STATE_KEY)")) errors.push('finalLogout must clear auth state');
+
+const statusJsFinal = fs.readFileSync(path.join(root,'hotspot/js/status.js'),'utf8');
+for (const marker of ['ctx.ip','ctx.mac','ctx.loginBy','ctx.interfaceName','ctx.vlanId','ctx.bytesIn','ctx.bytesOut','ctx.limitBytesTotal','ctx.remainBytesTotal','ctx.uptime','ctx.sessionTimeLeft']) {
+  if (!statusJsFinal.includes(marker)) errors.push('status.js missing RouterOS field: '+marker);
+}
+
+const cssFinal = fs.readFileSync(path.join(root,'hotspot/css/main.css'),'utf8');
+if (!cssFinal.includes('.service-features{grid-template-columns:repeat(2,minmax(0,1fr))}')) errors.push('service cards must remain two columns');
