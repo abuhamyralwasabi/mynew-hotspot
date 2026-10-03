@@ -14,12 +14,25 @@
     window.HS_CONTEXT = {
       username: "$(username)",
       domain: "$(domain)",
+      ip: "$(ip)",
+      mac: "$(mac)",
+      loginBy: "$(login-by)",
+      interfaceName: "$(interface-name)",
+      vlanId: "$(vlan-id)",
       bytesIn: "$(bytes-in)",
       bytesOut: "$(bytes-out)",
+      limitBytesIn: "$(limit-bytes-in)",
+      limitBytesOut: "$(limit-bytes-out)",
       limitBytesTotal: "$(limit-bytes-total)",
+      remainBytesIn: "$(remain-bytes-in)",
+      remainBytesOut: "$(remain-bytes-out)",
       remainBytesTotal: "$(remain-bytes-total)",
       uptime: "$(uptime)",
+      uptimeSecs: "$(uptime-secs)",
+      idleTime: "$(idle-time)",
+      idleTimeout: "$(idle-timeout)",
       sessionTimeLeft: "$(session-time-left)",
+      sessionTimeLeftSecs: "$(session-time-left-secs)",
       refreshTimeoutSecs: "$(refresh-timeout-secs)",
       linkLogout: "$(link-logout)",
       linkLogin: "$(link-login)",
@@ -56,12 +69,19 @@
         <h2 class="section-title">📋 تفاصيل الاتصال</h2>
         <div class="status-card-grid">
           <div class="status-row"><strong>رقم الكرت</strong><span class="status-value" dir="ltr">$(username)</span></div>
+          <div class="status-row"><strong>عنوان IP</strong><span class="status-value" id="clientIp" dir="ltr">—</span></div>
+          <div class="status-row"><strong>عنوان MAC</strong><span class="status-value" id="clientMac" dir="ltr">—</span></div>
+          <div class="status-row"><strong>طريقة الدخول</strong><span class="status-value" id="loginBy">—</span></div>
+          <div class="status-row"><strong>واجهة الاتصال</strong><span class="status-value" id="interfaceName">—</span></div>
+          <div class="status-row"><strong>VLAN</strong><span class="status-value" id="vlanId" dir="ltr">—</span></div>
           <div class="status-row"><strong>السرعة الحالية</strong><span class="status-value speed-current-value" id="currentSpeed">—</span></div>
           <div class="status-row"><strong>التحميل</strong><span class="status-value" id="download">—</span></div>
           <div class="status-row"><strong>الرفع</strong><span class="status-value" id="upload">—</span></div>
-          <div class="status-row"><strong>الرصيد المستخدم</strong><span class="status-value" id="used">—</span></div>
+          <div class="status-row"><strong>إجمالي الاستهلاك</strong><span class="status-value" id="used">—</span></div>
+          <div class="status-row"><strong>إجمالي الرصيد</strong><span class="status-value" id="total">—</span></div>
           <div class="status-row"><strong>الرصيد المتبقي</strong><span class="status-value" id="remain">—</span></div>
           <div class="status-row"><strong>الوقت المستهلك</strong><span class="status-value" id="uptime">—</span></div>
+          <div class="status-row"><strong>وقت الخمول</strong><span class="status-value" id="idleTime">—</span></div>
           <div class="status-row"><strong>الوقت المتبقي</strong><span class="status-value" id="timeLeft">—</span></div>
         </div>
       </div>
@@ -81,6 +101,10 @@
 
       <form action="$(link-logout)" style="margin:0">
         <button class="btn btn-logout" type="submit">🚪 تسجيل الخروج</button>
+      </form>
+
+      <form action="$(link-logout)?erase-cookie=on&netpro-final=1" method="get" style="margin:0">
+        <button class="btn btn-final-logout" type="submit">🔒 تسجيل الخروج نهائيًا من الكرت الحالي</button>
       </form>
 
       <p class="warning-notice">⚠️ تغيير السرعة يعيد تسجيل الدخول تلقائيًا وقد يسبب انقطاعًا قصيرًا للاتصال.</p>
