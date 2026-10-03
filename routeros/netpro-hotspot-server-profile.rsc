@@ -15,11 +15,16 @@
     hotspot-address=192.168.100.101 \
     html-directory="netpro" \
     login-by=http-chap,http-pap \
+    split-user-domain=yes \
     use-radius=yes \
     radius-interim-update=5m
 }
 
 # IMPORTANT:
+# The portal carries the selected speed through the HotSpot domain field.
+# split-user-domain keeps the card username separate from that speed value
+# during RADIUS/HotSpot authentication.
+#
 # Use the same NETPRO-HOTSPOT profile for every NetPro HotSpot server that
 # belongs to the same roaming domain.
 #
