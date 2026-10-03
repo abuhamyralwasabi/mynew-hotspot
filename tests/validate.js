@@ -78,3 +78,6 @@ const serverProfile = fs.readFileSync(path.join(root,'routeros/netpro-hotspot-se
 if (!serverProfile.includes('split-user-domain=yes')) errors.push('unified Server Profile must enable split-user-domain=yes');
 
 if (!fs.existsSync(path.join(root,'routeros/netpro-test-user.rsc'))) errors.push('Missing NetPro disposable test-user script');
+
+const floginSource = fs.readFileSync(path.join(root,'hotspot/flogin.html'),'utf8');
+if (!floginSource.includes('login-error="$(error)"')) errors.push('flogin.html must expose RouterOS error to hot-blocker');
