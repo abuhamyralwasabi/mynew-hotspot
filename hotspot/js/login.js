@@ -27,7 +27,9 @@
   }
 
   function getRawError() {
-    return ctx.error || queryValue('hs_error') || '';
+    var source = document.getElementById('routerErrorSource');
+    var routerError = source ? String(source.textContent || '').trim() : '';
+    return routerError || queryValue('hs_error') || ctx.error || '';
   }
 
   function renderLoginError() {
