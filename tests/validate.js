@@ -58,8 +58,6 @@ if (!loginJs.includes('NETPRO_AUTH') || !loginJs.includes('autoAttempted')) erro
 if (loginJs.includes('performanceToggle')) errors.push('login.js still references performance mode');
 if (!loginJs.includes('startAutoLogin') || !loginJs.includes('startPendingReauth')) errors.push('login.js missing auto-login paths');
 
-if (errors.length) { console.error(errors.join('\n')); process.exit(1); }
-console.log('NetPro validation passed:', config.speeds.length, 'speeds; all JS syntax checks passed.');
 const pickerJs = fs.readFileSync(path.join(root,'hotspot/js/speed-picker.js'),'utf8');
 if (pickerJs.includes('netproSpeedPortal') || pickerJs.includes('speed-picker-portal')) errors.push('speed picker must use the local menu, not a detached portal');
 if (!pickerJs.includes("wrapper.querySelector('[data-speed-menu]')")) errors.push('speed picker must bind the local menu element');
@@ -111,3 +109,10 @@ for (const marker of ['ctx.ip','ctx.mac','ctx.loginBy','ctx.interfaceName','ctx.
 
 const cssFinal = fs.readFileSync(path.join(root,'hotspot/css/main.css'),'utf8');
 if (!cssFinal.includes('.service-features{grid-template-columns:repeat(2,minmax(0,1fr))}')) errors.push('service cards must remain two columns');
+
+console.log('=== Final validation ===');
+if (errors.length) {
+  console.error(errors.join('\n'));
+  process.exit(1);
+}
+console.log('NetPro validation passed:', config.speeds.length, 'speeds; all JS syntax checks passed.');
