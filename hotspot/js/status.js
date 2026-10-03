@@ -91,10 +91,24 @@
     }).join(' ');
   }
 
+  function formatLoginBy(value) {
+    var raw = String(value || '').trim().toLowerCase();
+    var labels = {
+      'http-chap': 'HTTP-CHAP',
+      'http-pap': 'HTTP-PAP',
+      'https': 'HTTPS',
+      'cookie': 'Cookie',
+      'mac': 'MAC',
+      'mac-cookie': 'MAC Cookie',
+      'trial': 'تجربة'
+    };
+    return labels[raw] || (value || 'غير محدد');
+  }
+
   function updateIdentity() {
     setText('clientIp', ctx.ip || 'غير محدد');
     setText('clientMac', ctx.mac || 'غير محدد');
-    setText('loginBy', ctx.loginBy || 'غير محدد');
+    setText('loginBy', formatLoginBy(ctx.loginBy));
     setText('interfaceName', ctx.interfaceName || 'غير محدد');
     setText('vlanId', ctx.vlanId || 'غير محدد');
     setText('idleTime', formatDuration(ctx.idleTime));
