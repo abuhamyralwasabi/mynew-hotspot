@@ -13,10 +13,19 @@
     try { sessionStorage.removeItem('netpro_pending_reauth'); } catch (e) {}
   }
 
+  function query(name) {
+    try {
+      return new URLSearchParams(location.search).get(name) || '';
+    } catch (e) {
+      return '';
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     var pending = readPending();
+    var isFinal = query('netpro-final') === '1';
 
-    if (pending && pending.auto && pending.speed) {
+    if (pending && pending.auto && pending.speed && !isFinal) {
       if (pending.createdAt && Date.now() - pending.createdAt > 60000) {
         clearPending();
       } else {
@@ -35,8 +44,23 @@
       }
     }
 
-    // Manual logout: keep the last username saved, but disable automatic
-    // roaming re-login until the user authenticates successfully again.
+    clearPending();
+
+    if (isFinal) {
+      if (window.NETPRO_AUTH && typeof window.NETPRO_AUTH.finalLogout === 'function') {
+        window.NETPRO_AUTH.finalLogout();
+      }
+      if (window.NETPRO_AUTH) window.NETPRO_AUTH.clearAutoAttempt();
+
+      var contextFinal = window.HS_CONTEXT || {};
+      var finalLogin = contextFinal.linkLoginOnly || contextFinal.linkLogin || 'login.html';
+      setTimeout(function () {
+        location.replace(finalLogin);
+      }, 120);
+      return;
+    }
+
+    // Normal logout: keep the last username, but disable automatic roaming.
     if (window.NETPRO_AUTH) {
       window.NETPRO_AUTH.setAutoLogin(false);
       window.NETPRO_AUTH.clearAutoAttempt();
