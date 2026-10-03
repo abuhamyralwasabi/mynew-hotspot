@@ -87,3 +87,8 @@ if (!loginHtmlFinal.includes('id="routerErrorSource"')) errors.push('login.html 
 
 const testUserSource = fs.readFileSync(path.join(root,'routeros/netpro-test-user.rsc'),'utf8');
 if (!testUserSource.includes('password=""')) errors.push('test user must use a blank password');
+
+const loginTransport = fs.readFileSync(path.join(root,'hotspot/js/login.js'),'utf8');
+if (!loginTransport.includes('usesRadius ? selectedSpeed :')) errors.push('login.js must suppress domain transport on local-only routers');
+const speedTransport = fs.readFileSync(path.join(root,'routeros/speed2.rsc'),'utf8');
+if (!speedTransport.includes('domain unavailable or invalid')) errors.push('speed2.rsc must keep an explicit domain fallback log');
