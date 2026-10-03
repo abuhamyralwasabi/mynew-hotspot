@@ -35,7 +35,21 @@ Then follow `docs/TEST-CHECKLIST.md` and `docs/DEPLOYMENT.md` on a real RouterOS
 The official MikroTik HotSpot documentation describes `domain` as a client variable and `alogin.html` as the page shown after successful login.
 ## Speed transport prerequisite
 
-The current `speed2` implementation reads `/ip hotspot active` -> `domain`. MikroTik documents that `active.domain` represents a user domain when username/domain splitting is used and notes that this property is used with RADIUS authentication. Therefore, this speed transport must be verified on the target RouterOS 6 setup (especially when local HotSpot users are used) before production deployment. If the router does not populate `active.domain`, the portal must switch to a different transport rather than silently relying on it.
+The selected speed is transported through the HotSpot `domain` field only when
+the router uses RADIUS. MikroTik documents that `split-user-domain` separates
+a `user@domain` identity and that `active.domain` is used with RADIUS
+authentication.
+
+Therefore:
+- Production NetPro with User Manager/RADIUS: `router.usesRadius=true` and the
+  selected speed is submitted as `domain=<speed>`.
+- Local-only test router: `router.usesRadius=false`; the portal leaves
+  `domain` empty so the local username remains exactly the card code.
+  Dynamic domain-based speed cannot be validated on a local-only router and
+  speed2 safely falls back to 2M.
+
+Do not try to fix a local-only authentication failure by enabling
+`split-user-domain`; that setting belongs to the RADIUS user/domain path.
 
 
 ## Unified portal architecture
@@ -61,4 +75,5 @@ value. No password is stored in browser storage.
 
 The unified HotSpot Server Profile should use `split-user-domain=yes` so the
 speed carried in the HotSpot `domain` field stays separate from the card
-username.
+username when RADIUS is used.
+
