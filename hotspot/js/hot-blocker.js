@@ -1,1 +1,85 @@
-(function(){var B='netpro_blocked_at',M='netpro_block_minutes',F='netpro_fail_count';function c(n){var a=document.cookie.split(';');for(var i=0;i<a.length;i++){var p=a[i].trim().split('=');if(p[0]===n)return p.slice(1).join('=')}return''}function s(n,v,m){document.cookie=n+'='+v+';max-age='+(m*60)+';path=/'}function init(){var el=document.querySelector('[data-block-countdown]');if(el){var st=parseInt(c(B),10)||Date.now(),end=st+(parseInt(c(M),10)||2)*60000,t=setInterval(function(){var l=Math.max(0,end-Date.now());el.textContent='يتبقى '+Math.floor(l/60000)+' دقيقة و '+Math.floor(l%60000/1000)+' ثانية';if(!l){clearInterval(t);s(B,'',0);s(M,'',0);s(F,'',0);location.replace('login.html')}},1000);return}var x=document.querySelector('script[login-error]');if(!x)return;if(document.querySelector('script[clear-hot-blocker]')){s(B,'',0);s(F,'',0);return}if(c(B)){location.replace('block.html');return}var e=x.getAttribute('login-error')||'';if(!e)return;var n=(parseInt(c(F),10)||0)+1,max=parseInt(x.getAttribute('try-count')||6,10),min=parseInt(x.getAttribute('block-time')||2,10);s(F,n,min);if(n>max){s(B,Date.now(),min);s(M,min,min);location.replace('block.html')}}document.addEventListener('DOMContentLoaded',init)})();
+(function () {
+  'use strict';
+
+  var BLOCKED_AT = 'netpro_blocked_at';
+  var BLOCK_MINUTES = 'netpro_block_minutes';
+  var FAIL_COUNT = 'netpro_fail_count';
+
+  function cookie(name) {
+    var parts = String(document.cookie || '').split(';');
+    for (var i = 0; i < parts.length; i++) {
+      var part = parts[i].trim();
+      if (part.indexOf(name + '=') === 0) return part.substring(name.length + 1);
+    }
+    return '';
+  }
+
+  function setCookie(name, value, minutes) {
+    document.cookie = name + '=' + encodeURIComponent(value) +
+      '; Max-Age=' + Math.max(0, Math.floor(minutes * 60)) +
+      '; Path=/; SameSite=Lax';
+  }
+
+  function clearFailures() {
+    setCookie(BLOCKED_AT, '', 0);
+    setCookie(BLOCK_MINUTES, '', 0);
+    setCookie(FAIL_COUNT, '', 0);
+  }
+
+  function isTransientError(error) {
+    var a = String(error || '').toLowerCase();
+    return a.indexOf('already authorizing') >= 0 ||
+      a.indexOf('retry later') >= 0 ||
+      a.indexOf('already logged in') >= 0 ||
+      a.indexOf('already logged') >= 0;
+  }
+
+  function init() {
+    var countdown = document.querySelector('[data-block-countdown]');
+    if (countdown) {
+      var started = parseInt(cookie(BLOCKED_AT), 10) || Date.now();
+      var duration = (parseInt(cookie(BLOCK_MINUTES), 10) || 2) * 60000;
+      var timer = setInterval(function () {
+        var left = Math.max(0, started + duration - Date.now());
+        countdown.textContent =
+          'يتبقى ' + Math.floor(left / 60000) + ' دقيقة و ' +
+          Math.floor((left % 60000) / 1000) + ' ثانية';
+        if (!left) {
+          clearInterval(timer);
+          clearFailures();
+          location.replace('login.html');
+        }
+      }, 1000);
+      return;
+    }
+
+    var marker = document.querySelector('script[login-error]');
+    if (!marker) return;
+
+    if (document.querySelector('script[clear-hot-blocker]')) {
+      clearFailures();
+      return;
+    }
+
+    if (cookie(BLOCKED_AT)) {
+      location.replace('block.html');
+      return;
+    }
+
+    var error = marker.getAttribute('login-error') || '';
+    if (!error || isTransientError(error)) return;
+
+    var count = (parseInt(cookie(FAIL_COUNT), 10) || 0) + 1;
+    var max = parseInt(marker.getAttribute('try-count') || 6, 10);
+    var minutes = parseInt(marker.getAttribute('block-time') || 2, 10);
+
+    setCookie(FAIL_COUNT, count, minutes);
+    if (count > max) {
+      setCookie(BLOCKED_AT, Date.now(), minutes);
+      setCookie(BLOCK_MINUTES, minutes, minutes);
+      location.replace('block.html');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
