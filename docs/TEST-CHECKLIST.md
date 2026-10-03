@@ -61,3 +61,22 @@
 - Selecting a speed updates the hidden domain field.
 - No detached speed-picker portal exists.
 - No old duplicate renderer remains in app.js.
+
+## Final logout
+- From status, "تسجيل الخروج" preserves the current username for manual re-entry but does not auto-login.
+- From status, "تسجيل الخروج نهائيًا من الكرت الحالي" sends `erase-cookie=on`.
+- Final logout clears the current browser authentication state and current-card history entry.
+- After final logout, opening login does not auto-submit the previous card.
+- Final logout does not affect saved history entries for other cards.
+
+## Status RouterOS accuracy
+- IP, MAC, login method, interface, and VLAN match the active HotSpot session.
+- Download uses RouterOS `bytes-out`; upload uses RouterOS `bytes-in`.
+- Total quota uses `limit-bytes-total`; remaining quota uses `remain-bytes-total`.
+- Session uptime uses `uptime`; session remaining time uses `session-time-left`.
+- When RouterOS supplies no byte quota, the UI shows "غير محدد" rather than fabricating a quota.
+
+## Responsive services
+- Services remain two cards per row at 280 / 320 / 360 / 390 / 430px widths.
+- Service card text wraps without horizontal scrolling or overflow.
+- Top navigation labels remain prominent and readable on small screens.
