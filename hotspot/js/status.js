@@ -31,14 +31,19 @@
     if (element) element.textContent = value;
   }
 
+  function numberValue(value) {
+    var n = parseFloat(String(value == null ? '' : value).replace(/,/g, ''));
+    return isFinite(n) && n >= 0 ? n : null;
+  }
+
   function formatNumber(value) {
     var rounded = Math.round(value * 100) / 100;
     return String(rounded);
   }
 
   function formatBytes(value) {
-    var bytes = parseFloat(value);
-    if (!isFinite(bytes) || bytes < 0) return 'غير محدد';
+    var bytes = numberValue(value);
+    if (bytes === null) return 'غير محدد';
 
     var units = [
       { size: 1099511627776, label: 'تيرابايت' },
@@ -62,7 +67,7 @@
     if (raw === '0' || raw === '0s') return '0 ثانية';
 
     var parts = [];
-    var pattern = /(\\d+)\\s*(w|d|h|m|s)/gi;
+    var pattern = /(\d+)\s*(w|d|h|m|s)/gi;
     var match;
 
     while ((match = pattern.exec(raw))) {
@@ -86,43 +91,67 @@
     }).join(' ');
   }
 
+  function updateIdentity() {
+    setText('clientIp', ctx.ip || 'غير محدد');
+    setText('clientMac', ctx.mac || 'غير محدد');
+    setText('loginBy', ctx.loginBy || 'غير محدد');
+    setText('interfaceName', ctx.interfaceName || 'غير محدد');
+    setText('vlanId', ctx.vlanId || 'غير محدد');
+    setText('idleTime', formatDuration(ctx.idleTime));
+  }
+
   function updateUsage() {
-    var total = parseInt(ctx.limitBytesTotal, 10);
-    var routerRemain = parseInt(ctx.remainBytesTotal, 10);
-    var hasRouterRemain = isFinite(routerRemain) && routerRemain >= 0;
-    var sessionUsed = (parseInt(ctx.bytesIn, 10) || 0) + (parseInt(ctx.bytesOut, 10) || 0);
-    var used = hasRouterRemain && total > 0 ? Math.max(0, total - routerRemain) : sessionUsed;
-    var remain = hasRouterRemain ? routerRemain :
-      (total > 0 ? Math.max(0, total - used) : null);
-    var percent = total > 0 ? Math.max(0, Math.min(100, Math.floor((used / total) * 100))) : null;
+    var total = numberValue(ctx.limitBytesTotal);
+    var routerRemain = numberValue(ctx.remainBytesTotal);
+    var sessionUsed = (numberValue(ctx.bytesIn) || 0) + (numberValue(ctx.bytesOut) || 0);
+
+    // When RouterOS supplies remain-bytes-total, it is the authoritative
+    // remaining quota value. Otherwise only the measured traffic counters
+    // are shown and no artificial quota is created.
+    var used = routerRemain !== null && total !== null
+      ? Math.max(0, total - routerRemain)
+      : sessionUsed;
+
+    var remain = routerRemain !== null
+      ? routerRemain
+      : (total !== null ? Math.max(0, total - used) : null);
+
+    var percent = total !== null && total > 0
+      ? Math.max(0, Math.min(100, Math.floor((used / total) * 100)))
+      : null;
+
     var percentEl = document.getElementById('percent');
     var bar = document.getElementById('bar');
     var circle = document.getElementById('circle');
     var msg = document.getElementById('msg');
 
+    setText('used', formatBytes(used));
+    setText('total', total !== null ? formatBytes(total) : 'غير محدد');
+    setText('remain', remain !== null ? formatBytes(remain) : 'غير محدد');
+
     if (percent === null) {
       if (percentEl) percentEl.textContent = '—';
-      setText('used', formatBytes(used));
-      setText('remain', 'غير محدد');
       if (bar) bar.style.width = '0%';
       if (circle) circle.style.strokeDashoffset = '440';
-      if (msg) msg.textContent = used > 0 ?
-        '✅ الاستهلاك محسوب حسب البيانات المستخدمة' :
-        '✅ لا يوجد حد بيانات مُعرّف لهذا الكرت';
+      if (msg) msg.textContent = sessionUsed > 0
+        ? '✅ الاستهلاك المعروض من عدادات RouterOS الحالية'
+        : '✅ لا يوجد حد بيانات مُعرّف لهذا الكرت';
       return;
     }
 
     if (percentEl) percentEl.textContent = percent + '%';
-    setText('used', formatBytes(used));
-    setText('remain', formatBytes(remain));
     if (bar) bar.style.width = percent + '%';
     if (circle) circle.style.strokeDashoffset = 440 - (440 * percent / 100);
-    if (msg) msg.textContent = percent >= 90 ?
-      '🚨 الكرت اقترب من استهلاك الحد المسموح' :
-      percent >= 50 ? '⚠️ تم استهلاك جزء متوسط من الرصيد' : '✅ الكرت بحالة جيدة';
+    if (msg) msg.textContent = percent >= 90
+      ? '🚨 الكرت اقترب من استهلاك الحد المسموح'
+      : percent >= 50
+        ? '⚠️ تم استهلاك جزء متوسط من الرصيد'
+        : '✅ الكرت بحالة جيدة';
   }
 
   function updateTrafficAndTime() {
+    // MikroTik semantics: bytes-out = bytes sent to the client (download),
+    // bytes-in = bytes received from the client (upload).
     setText('download', formatBytes(ctx.bytesOut));
     setText('upload', formatBytes(ctx.bytesIn));
     setText('uptime', formatDuration(ctx.uptime));
@@ -190,6 +219,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
+    updateIdentity();
     renderCurrentSpeed();
     updateUsage();
     updateTrafficAndTime();
