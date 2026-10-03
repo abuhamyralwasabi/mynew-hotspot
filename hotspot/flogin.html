@@ -5,35 +5,31 @@
   <meta http-equiv="pragma" content="no-cache">
   <meta http-equiv="expires" content="-1">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>NetPro | تعذر تسجيل الدخول</title>
+  <title>NetPro | تسجيل الدخول</title>
   <link rel="stylesheet" href="css/main.css">
-  <script src="js/ui-utils.js"></script>
 </head>
 <body>
   <main class="page-root">
     <section class="tab-content active">
-      <div class="logo-section">
-        <div class="logo-frame"><img src="imgs/NetPro-Logo.svg" width="320" height="114" decoding="async" alt="NetPro"></div>
-        <h1 class="logo-title">🔐 تسجيل الدخول</h1>
-      </div>
       <div class="page-message glass-card">
         <div class="icon">⚠️</div>
         <h1>تعذر تسجيل الدخول</h1>
-        <p>لم يتم قبول بيانات الكرت.</p>
-        <div class="notice-box" style="margin-top:12px;text-align:right">
-          <strong>سبب الخطأ:</strong><br>
-          <span id="routerError">$(error)</span>
-        </div>
-        <a class="btn btn-login" href="$(link-login)">🔄 المحاولة مرة أخرى</a>
+        <p id="routerError">$(error)</p>
+        <p style="margin-top:10px">سيتم إعادتك إلى صفحة الدخول لعرض سبب الخطأ وإعادة المحاولة.</p>
+        <a id="retry" class="btn btn-login" href="$(link-login)">🔄 العودة إلى صفحة الدخول</a>
       </div>
     </section>
-    <footer><span>دعم فني: 780201264</span></footer>
   </main>
+
   <script>
     (function () {
-      var el = document.getElementById('routerError');
-      if (el && typeof window.toArabicError === 'function') {
-        el.textContent = window.toArabicError(el.textContent);
+      var errorNode = document.getElementById('routerError');
+      var error = errorNode ? errorNode.textContent : '';
+      var target = '$(link-login)';
+      var separator = target.indexOf('?') >= 0 ? '&' : '?';
+
+      if (error && target) {
+        location.replace(target + separator + 'hs_error=' + encodeURIComponent(error));
       }
     })();
   </script>
