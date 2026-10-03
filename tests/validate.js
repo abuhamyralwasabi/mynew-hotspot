@@ -65,7 +65,7 @@ if (pickerJs.includes('netproSpeedPortal') || pickerJs.includes('speed-picker-po
 if (!pickerJs.includes("wrapper.querySelector('[data-speed-menu]')")) errors.push('speed picker must bind the local menu element');
 
 const configAuth = config && config.auth;
-if (!configAuth || configAuth.passwordMode !== 'username') errors.push('auth.passwordMode must be username for the one-field card portal');
+if (!configAuth || configAuth.passwordMode !== 'blank') errors.push('auth.passwordMode must be blank for NetPro card accounts');
 const loginSource = fs.readFileSync(path.join(root,'hotspot/js/login.js'),'utf8');
 if (!loginSource.includes('credentialPassword') || !loginSource.includes('renderLoginError') || !loginSource.includes('hs_error')) errors.push('login.js card auth/error handling is incomplete');
 const ui = fs.readFileSync(path.join(root,'hotspot/js/ui-utils.js'),'utf8');
@@ -84,3 +84,6 @@ if (!floginSource.includes('login-error="$(error)"')) errors.push('flogin.html m
 
 const loginHtmlFinal = fs.readFileSync(path.join(root,'hotspot/login.html'),'utf8');
 if (!loginHtmlFinal.includes('id="routerErrorSource"')) errors.push('login.html must carry RouterOS error in a text node');
+
+const testUserSource = fs.readFileSync(path.join(root,'routeros/netpro-test-user.rsc'),'utf8');
+if (!testUserSource.includes('password=""')) errors.push('test user must use a blank password');
