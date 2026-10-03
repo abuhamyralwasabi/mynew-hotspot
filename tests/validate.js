@@ -81,3 +81,6 @@ if (!fs.existsSync(path.join(root,'routeros/netpro-test-user.rsc'))) errors.push
 
 const floginSource = fs.readFileSync(path.join(root,'hotspot/flogin.html'),'utf8');
 if (!floginSource.includes('login-error="$(error)"')) errors.push('flogin.html must expose RouterOS error to hot-blocker');
+
+const loginHtmlFinal = fs.readFileSync(path.join(root,'hotspot/login.html'),'utf8');
+if (!loginHtmlFinal.includes('id="routerErrorSource"')) errors.push('login.html must carry RouterOS error in a text node');
