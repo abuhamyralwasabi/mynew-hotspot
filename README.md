@@ -51,15 +51,14 @@ The current `speed2` implementation reads `/ip hotspot active` -> `domain`. Mikr
 - Existing printed-card HotSpot user profiles are intentionally left untouched.
 - New selectable-speed accounts use the dedicated NETPRO-SPEED profile; package
   quota/validity remains a separate User Manager concern.
-
-
+    
 ## Card-only credential model
 
-The portal intentionally exposes one credential field: the card code. For a
-card account to authenticate, the RouterOS/User Manager account must use the
-same card value as its password. The client never stores that password; it is
-generated in memory only when the login request is submitted.
+The portal intentionally exposes one credential field: the card code. NetPro
+card accounts use the card code as the username and an empty password. The
+password field remains hidden in the HTML form and is submitted as an empty
+value. No password is stored in browser storage.
 
 The unified HotSpot Server Profile should use `split-user-domain=yes` so the
 speed carried in the HotSpot `domain` field stays separate from the card
-username during authentication.
+username.
