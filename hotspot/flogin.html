@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="pragma" content="no-cache">
+  <meta http-equiv="expires" content="-1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>NetPro | تعذر تسجيل الدخول</title>
+  <link rel="stylesheet" href="css/main.css">
+  <script src="js/ui-utils.js"></script>
+</head>
+<body>
+  <main class="page-root">
+    <section class="tab-content active">
+      <div class="logo-section">
+        <div class="logo-frame"><img src="imgs/NetPro-Logo.svg" width="320" height="114" decoding="async" alt="NetPro"></div>
+        <h1 class="logo-title">🔐 تسجيل الدخول</h1>
+      </div>
+      <div class="page-message glass-card">
+        <div class="icon">⚠️</div>
+        <h1>تعذر تسجيل الدخول</h1>
+        <p>لم يتم قبول بيانات الكرت.</p>
+        <div class="notice-box" style="margin-top:12px;text-align:right">
+          <strong>سبب الخطأ:</strong><br>
+          <span id="routerError">$(error)</span>
+        </div>
+        <a class="btn btn-login" href="$(link-login)">🔄 المحاولة مرة أخرى</a>
+      </div>
+    </section>
+    <footer><span>دعم فني: 780201264</span></footer>
+  </main>
+  <script>
+    (function () {
+      var el = document.getElementById('routerError');
+      if (el && typeof window.toArabicError === 'function') {
+        el.textContent = window.toArabicError(el.textContent);
+      }
+    })();
+  </script>
+</body>
+</html>
