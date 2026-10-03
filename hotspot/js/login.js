@@ -49,7 +49,7 @@
   }
 
   function credentialPassword(username) {
-    var mode = c.auth && c.auth.passwordMode ? c.auth.passwordMode : 'username';
+    var mode = c.auth && c.auth.passwordMode ? c.auth.passwordMode : 'blank';
     return mode === 'blank' ? '' : username;
   }
 
