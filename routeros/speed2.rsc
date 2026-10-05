@@ -9,6 +9,13 @@
 #
 # The script intentionally creates only ONE Simple Queue per active client.
 # It uses max-limit only; it does not reserve limit-at bandwidth.
+#
+# Dual authentication note:
+# - User Manager / RADIUS sessions can carry the portal-selected domain speed.
+# - Local /ip hotspot user sessions do not carry a usable domain value on
+#   RouterOS 6.49.x, so this script safely falls back to 2M for a local user
+#   only when that user is assigned to NETPRO-SPEED. Existing local users on
+#   their own HotSpot profiles remain controlled by those profiles.
 
 {
   :do {
@@ -51,7 +58,7 @@
     :foreach q in=[/queue simple find where target=$target] do={
       :local qName [/queue simple get $q name];
       :local qComment [/queue simple get $q comment];
-      :local isNetpro ([:len $qComment] >= 10 && [:pick $qComment 0 10] = "NetProSpeed");
+      :local isNetpro ([:len $qComment] >= 11 && [:pick $qComment 0 11] = "NetProSpeed");
       :if ($isNetpro || $qName = $ip || $qName = ("NETPRO-" . $ip)) do={
         /queue simple remove $q;
       }
