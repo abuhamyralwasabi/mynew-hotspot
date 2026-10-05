@@ -104,7 +104,7 @@
     instance.menu.innerHTML = (c.speeds || []).map(function (item) {
       return '<button type="button" class="speed-option" role="option" data-speed-value="' +
         esc(item.value) + '"><span>' + esc(item.label || item.value) +
-        '</span><b dir="ltr">' + esc(item.value) + '</b></button>';
+        '</span></button>';
     }).join('');
 
     sync(instance);

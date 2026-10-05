@@ -20,6 +20,7 @@ for (const speed of config.speeds || []) {
   if (!speed.upload || !speed.download) errors.push('Missing upload/download for: ' + speed.value);
 }
 if (config.defaultSpeed && !seen.has(config.defaultSpeed)) errors.push('defaultSpeed is not present in speeds');
+if (config.defaultSpeed !== '1M') errors.push('defaultSpeed must be 1M (سرعة عادية)');
 if (!config.router || config.router.dynamicSpeedProfile !== 'NETPRO-SPEED') errors.push('router dynamic speed profile mismatch');
 for (const file of fs.readdirSync(path.join(root, 'hotspot', 'js'))) {
   if (!file.endsWith('.js')) continue;
@@ -45,6 +46,7 @@ for (const required of ['auth.js','speed-picker.js']) {
 }
 const app = fs.readFileSync(path.join(root,'hotspot/js/app.js'),'utf8');
 if (app.includes('function speeds(') || app.includes('HS_RENDER')) errors.push('app.js still contains duplicate speed picker logic');
+if (!app.includes('data-package-cards') || !app.includes('package-card-title') || !app.includes('package-field-label')) errors.push('app.js package card renderer is incomplete');
 const statusHtml = fs.readFileSync(path.join(root,'hotspot/status.html'),'utf8');
 if (!statusHtml.includes('js/speed-picker.js')) errors.push('status.html missing speed-picker.js');
 if (!statusHtml.includes('data-speed-trigger') || !statusHtml.includes('data-speed-menu')) errors.push('status.html speed picker markup is incomplete');
@@ -61,6 +63,8 @@ if (!loginJs.includes('startAutoLogin') || !loginJs.includes('startPendingReauth
 const pickerJs = fs.readFileSync(path.join(root,'hotspot/js/speed-picker.js'),'utf8');
 if (pickerJs.includes('netproSpeedPortal') || pickerJs.includes('speed-picker-portal')) errors.push('speed picker must use the local menu, not a detached portal');
 if (!pickerJs.includes("wrapper.querySelector('[data-speed-menu]')")) errors.push('speed picker must bind the local menu element');
+if (!pickerJs.includes("esc(item.label || item.value)")) errors.push('speed picker option labels are missing');
+if (pickerJs.includes('</span><b dir="ltr">')) errors.push('speed picker must not render numeric values beside labels');
 
 const configAuth = config && config.auth;
 if (!configAuth || configAuth.passwordMode !== 'blank') errors.push('auth.passwordMode must be blank for NetPro card accounts');
@@ -131,6 +135,10 @@ for (const marker of ['ctx.ip','ctx.mac','ctx.loginBy','ctx.interfaceName','ctx.
 
 const cssFinal = fs.readFileSync(path.join(root,'hotspot/css/main.css'),'utf8');
 if (!cssFinal.includes('.service-features{grid-template-columns:repeat(2,minmax(0,1fr))}')) errors.push('service cards must remain two columns');
+if (!cssFinal.includes('.package-cards{display:none')) errors.push('package cards must be hidden on larger screens');
+if (!cssFinal.includes('.table-container table{display:none}')) errors.push('package table must be hidden on small screens');
+if (!cssFinal.includes('.speed-option{justify-content:center!important;text-align:center!important}')) errors.push('speed picker options must be centered');
+if (!cssFinal.includes('.speed-option b{display:none!important}')) errors.push('speed picker numeric values must remain hidden');
 
 console.log('=== Final validation ===');
 if (errors.length) {

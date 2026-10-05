@@ -85,3 +85,31 @@ footer{font-size:11px}
   border:1px solid rgba(255,255,255,.12);
   box-shadow:0 8px 20px rgba(127,29,29,.22);
 }
+
+/* Responsive package presentation: table on larger screens, cards on phones. */
+.package-cards{display:none;gap:10px}
+.package-card{padding:13px;border:1px solid rgba(0,132,255,.22);border-radius:15px;background:linear-gradient(145deg,rgba(0,132,255,.07),rgba(169,16,121,.05));box-shadow:0 7px 18px rgba(0,0,0,.16);text-align:right}
+.package-card-title{margin:0 0 10px;padding:8px 10px;border-radius:11px;background:rgba(0,0,0,.18);color:#9ed6ff;font-size:15px;font-weight:900;text-align:center}
+.package-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.package-field{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;padding:8px 9px;border:1px solid rgba(255,255,255,.07);border-radius:10px;background:rgba(255,255,255,.035)}
+.package-field-label{color:#adb7c5;font-size:12px;font-weight:700;white-space:nowrap}
+.package-field strong{min-width:0;color:#fff;font-size:12px;font-weight:800;text-align:left;overflow-wrap:anywhere}
+.package-card .price-val{font-size:13px}
+
+@media(max-width:480px){
+  .table-container{overflow:visible;border:0}
+  .table-container table{display:none}
+  .package-cards{display:grid}
+}
+@media(max-width:340px){
+  .package-card{padding:11px}
+  .package-card-title{font-size:14px}
+  .package-details{grid-template-columns:1fr}
+  .package-field{padding:8px}
+  .package-field-label,.package-field strong{font-size:11px}
+}
+
+/* Speed picker: show only the Arabic option label and center it. */
+.speed-option{justify-content:center!important;text-align:center!important}
+.speed-option span{width:100%;text-align:center}
+.speed-option b{display:none!important}
