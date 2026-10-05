@@ -7,6 +7,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>NetPro | تسجيل الدخول</title>
   <link rel="stylesheet" href="css/main.css">
+  <script src="config.js"></script>
+  <script src="js/auth.js"></script>
   <script src="js/hot-blocker.js" login-error="$(error)" try-count="6" block-time="2"></script>
 </head>
 <body>
@@ -25,18 +27,47 @@
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       var errorNode = document.getElementById('routerError');
-      var error = errorNode ? errorNode.textContent : '';
+      var error = errorNode ? String(errorNode.textContent || '').trim() : '';
       var target = '$(link-login)';
       var separator = target.indexOf('?') >= 0 ? '&' : '?';
 
-      // hot-blocker.js runs first and may redirect to block.html.
-      // Only return to the login page when the client is not blocked.
-      var blocked = String(document.cookie || '').indexOf('netpro_blocked_at=') >= 0;
-      if (!blocked && error && target) {
-        setTimeout(function () {
-          location.replace(target + separator + 'hs_error=' + encodeURIComponent(error));
-        }, 30);
+      if (!error || !target) return;
+
+      /*
+       * Dual authentication:
+       *   1) The portal tries the preferred source.
+       *   2) On a source/authentication failure, auth.js prepares exactly one
+       *      opposite-source attempt (RADIUS <-> local).
+       *   3) Only after both paths fail is the normal Arabic error shown.
+       */
+      var auth = window.NETPRO_AUTH;
+      var fallback = null;
+
+      if (auth && typeof auth.shouldFallback === 'function' && auth.shouldFallback(error)) {
+        fallback = auth.prepareFallback();
+
+        if (fallback && typeof auth.saveAttempt === 'function') {
+          auth.saveAttempt(fallback);
+        }
+      } else if (auth && typeof auth.clearAttempt === 'function') {
+        auth.clearAttempt();
       }
+
+      if (fallback && fallback.mode) {
+        var fallbackQuery = [
+          'hs_dual_fallback=1',
+          'hs_auth_mode=' + encodeURIComponent(fallback.mode)
+        ].join('&');
+
+        setTimeout(function () {
+          location.replace(target + separator + fallbackQuery);
+        }, 30);
+        return;
+      }
+
+      setTimeout(function () {
+        location.replace(target + separator + 'hs_error=' + encodeURIComponent(error));
+      }, 30);
     });
   </script>
 </body>
