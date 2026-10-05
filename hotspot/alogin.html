@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="css/main.css">
   <script src="config.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/hot-blocker.js"></script>
   <script clear-hot-blocker></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -19,11 +20,23 @@
 
       var target = '$(link-status)';
       var card = '$(username)';
-      var selectedSpeed = '$(domain)' || ((pending || {}).speed || '');
+      var attempt = window.NETPRO_AUTH &&
+        typeof window.NETPRO_AUTH.readAttempt === 'function'
+        ? window.NETPRO_AUTH.readAttempt()
+        : null;
+
+      var source = attempt && attempt.mode
+        ? attempt.mode
+        : ('$(domain)' ? 'radius' : 'local');
+
+      var selectedSpeed = source === 'radius'
+        ? ('$(domain)' || ((pending || {}).speed || (attempt || {}).speed || ''))
+        : '';
 
       if (window.NETPRO_AUTH && card) {
-        window.NETPRO_AUTH.rememberSuccess(card, selectedSpeed);
+        window.NETPRO_AUTH.rememberSuccess(card, selectedSpeed, source);
         window.NETPRO_AUTH.clearAutoAttempt();
+        window.NETPRO_AUTH.clearAttempt();
       }
 
       if (pending && pending.auto) {
