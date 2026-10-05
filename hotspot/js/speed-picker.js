@@ -122,6 +122,10 @@
       return '<option value="' + esc(item.value) + '">' +
         esc(item.label || item.value) + '</option>';
     }).join('');
+
+    // Enforce the configured default on the very first render.
+    select.value = fallbackSpeed();
+
     select.hidden = true;
     select.setAttribute('aria-hidden', 'true');
 
