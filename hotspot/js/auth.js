@@ -253,7 +253,7 @@
     return a.indexOf('invalid username or password') >= 0 ||
       a.indexOf('invalid password') >= 0 ||
       a.indexOf('wrong password') >= 0 ||
-      a.indexOf('user not found') >= 0 ||
+      (a.indexOf('user ') >= 0 && a.indexOf('not found') >= 0) ||
       a.indexOf('no such user') >= 0 ||
       a.indexOf('access-reject') >= 0 ||
       (a.indexOf('radius') >= 0 &&
