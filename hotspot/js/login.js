@@ -193,7 +193,9 @@
       return state.source;
     }
 
-    return radiusEnabled() ? 'radius' : 'local';
+    return radiusEnabled() && (!c.auth || c.auth.radiusFirst !== false)
+      ? 'radius'
+      : 'local';
   }
 
   function prepareAttempt(username, selectedSpeed, mode, options) {
