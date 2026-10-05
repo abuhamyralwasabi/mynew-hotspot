@@ -79,31 +79,54 @@ if (!fs.existsSync(path.join(root,'routeros/netpro-test-user.rsc'))) errors.push
 
 const floginSource = fs.readFileSync(path.join(root,'hotspot/flogin.html'),'utf8');
 if (!floginSource.includes('login-error="$(error)"')) errors.push('flogin.html must expose RouterOS error to hot-blocker');
+if (!floginSource.includes('prepareFallback') || !floginSource.includes('hs_dual_fallback=1')) errors.push('flogin.html must implement dual-auth fallback handoff');
 
 const loginHtmlFinal = fs.readFileSync(path.join(root,'hotspot/login.html'),'utf8');
 if (!loginHtmlFinal.includes('id="routerErrorSource"')) errors.push('login.html must carry RouterOS error in a text node');
+
+const blockerDual = fs.readFileSync(path.join(root,'hotspot/js/hot-blocker.js'),'utf8');
+if (!blockerDual.includes('isDualAuthFallback') || !blockerDual.includes('window.NETPRO_AUTH')) errors.push('hot-blocker.js must ignore deliberate dual-auth fallback');
+
+const aloginSource = fs.readFileSync(path.join(root,'hotspot/alogin.html'),'utf8');
+if (!aloginSource.includes('js/hot-blocker.js') || !aloginSource.includes('rememberSuccess(card, selectedSpeed, source)')) errors.push('alogin.html must persist auth source and clear blocker');
+
+const cleanupSource = fs.readFileSync(path.join(root,'routeros/speed2-cleanup-on-logout.rsc'),'utf8');
+if (!cleanupSource.includes('NETPRO-" . $ip') || !cleanupSource.includes('NetProSpeed')) errors.push('on-logout cleanup must remove the current NetPro queue');
+
+if (!configAuth || configAuth.dualAuth !== true || configAuth.localFallback !== true) errors.push('config auth dual-auth flags are incomplete');
 
 const testUserSource = fs.readFileSync(path.join(root,'routeros/netpro-test-user.rsc'),'utf8');
 if (!testUserSource.includes('password=""')) errors.push('test user must use a blank password');
 
 const loginTransport = fs.readFileSync(path.join(root,'hotspot/js/login.js'),'utf8');
+if (!loginTransport.includes('dualAuthEnabled') || !loginTransport.includes('prepareAttempt')) errors.push('login.js dual-auth engine is incomplete');
+if (!loginTransport.includes('allowFallback: false')) errors.push('login.js must prevent fallback loops');
+if (!loginTransport.includes('hs_dual_fallback')) errors.push('login.js must support the dual-auth fallback handoff');
 if (!loginTransport.includes('usesRadius ? selectedSpeed :')) errors.push('login.js must suppress domain transport on local-only routers');
 const speedTransport = fs.readFileSync(path.join(root,'routeros/speed2.rsc'),'utf8');
 if (!speedTransport.includes('domain unavailable or invalid')) errors.push('speed2.rsc must keep an explicit domain fallback log');
+if (!speedTransport.includes('>= 11 && [:pick $qComment 0 11]')) errors.push('speed2.rsc NetPro queue prefix detection is incorrect');
 
 const statusFinal = fs.readFileSync(path.join(root,'hotspot/status.html'),'utf8');
+if (!statusFinal.includes('bytesTotal: "$(bytes-total)"')) errors.push('status.html must expose RouterOS bytes-total');
+if (!statusFinal.includes('js/auth.js')) errors.push('status.html must load shared auth state');
+if (!statusFinal.includes('id="authSource"')) errors.push('status.html must expose auth source');
+if (!statusFinal.includes('id="speedChangeNote"')) errors.push('status.html must explain local speed limitations');
 if (!statusFinal.includes('netpro-final=1') || !statusFinal.includes('erase-cookie=on')) errors.push('status.html final logout action is incomplete');
 if (!statusFinal.includes('تسجيل الخروج نهائيًا من الكرت الحالي')) errors.push('status.html final logout label is missing');
 
 const logoutSourceFinal = fs.readFileSync(path.join(root,'hotspot/js/logout.js'),'utf8');
 if (!logoutSourceFinal.includes("query('netpro-final') === '1'") || !logoutSourceFinal.includes('finalLogout')) errors.push('logout.js final logout path is incomplete');
+if (!logoutSourceFinal.includes('usernameHint')) errors.push('logout.js must pass current username to finalLogout');
 
 const authSourceFinal = fs.readFileSync(path.join(root,'hotspot/js/auth.js'),'utf8');
-if (!authSourceFinal.includes('function finalLogout()')) errors.push('auth.js missing finalLogout');
+if (!authSourceFinal.includes('function finalLogout(')) errors.push('auth.js missing finalLogout');
+if (!authSourceFinal.includes('function prepareFallback(') || !authSourceFinal.includes('function shouldFallback(')) errors.push('auth.js dual-auth fallback engine is incomplete');
+if (!authSourceFinal.includes('source: normalizedSource')) errors.push('auth.js must persist the successful auth source');
 if (!authSourceFinal.includes("localStorage.removeItem(STATE_KEY)")) errors.push('finalLogout must clear auth state');
 
 const statusJsFinal = fs.readFileSync(path.join(root,'hotspot/js/status.js'),'utf8');
-for (const marker of ['ctx.ip','ctx.mac','ctx.loginBy','ctx.interfaceName','ctx.vlanId','ctx.bytesIn','ctx.bytesOut','ctx.limitBytesTotal','ctx.remainBytesTotal','ctx.uptime','ctx.sessionTimeLeft']) {
+for (const marker of ['ctx.ip','ctx.mac','ctx.loginBy','ctx.interfaceName','ctx.vlanId','ctx.bytesIn','ctx.bytesOut','ctx.bytesTotal','ctx.limitBytesTotal','ctx.remainBytesTotal','ctx.uptime','ctx.sessionTimeLeft']) {
   if (!statusJsFinal.includes(marker)) errors.push('status.js missing RouterOS field: '+marker);
 }
 
