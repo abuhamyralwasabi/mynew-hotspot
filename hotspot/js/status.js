@@ -141,14 +141,11 @@
   function updateUsage() {
     var total = numberValue(ctx.limitBytesTotal);
     var routerRemain = numberValue(ctx.remainBytesTotal);
-    var routerSessionTotal = numberValue(ctx.bytesTotal);
-    var sessionUsed = routerSessionTotal !== null
-      ? routerSessionTotal
-      : (numberValue(ctx.bytesIn) || 0) + (numberValue(ctx.bytesOut) || 0);
+    var sessionUsed = (numberValue(ctx.bytesIn) || 0) + (numberValue(ctx.bytesOut) || 0);
 
     // RouterOS remain-bytes-total is the authoritative remaining quota when
-    // available. bytes-total is the authoritative current session traffic
-    // counter when no total quota is exposed.
+    // available. Otherwise the documented bytes-in + bytes-out counters are
+    // used for current-session traffic.
     var used = routerRemain !== null && total !== null
       ? Math.max(0, total - routerRemain)
       : sessionUsed;
