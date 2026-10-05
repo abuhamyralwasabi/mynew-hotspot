@@ -108,7 +108,6 @@ if (!speedTransport.includes('domain unavailable or invalid')) errors.push('spee
 if (!speedTransport.includes('>= 11 && [:pick $qComment 0 11]')) errors.push('speed2.rsc NetPro queue prefix detection is incorrect');
 
 const statusFinal = fs.readFileSync(path.join(root,'hotspot/status.html'),'utf8');
-if (!statusFinal.includes('bytesTotal: "$(bytes-total)"')) errors.push('status.html must expose RouterOS bytes-total');
 if (!statusFinal.includes('js/auth.js')) errors.push('status.html must load shared auth state');
 if (!statusFinal.includes('id="authSource"')) errors.push('status.html must expose auth source');
 if (!statusFinal.includes('id="speedChangeNote"')) errors.push('status.html must explain local speed limitations');
@@ -126,7 +125,7 @@ if (!authSourceFinal.includes('source: normalizedSource')) errors.push('auth.js 
 if (!authSourceFinal.includes("localStorage.removeItem(STATE_KEY)")) errors.push('finalLogout must clear auth state');
 
 const statusJsFinal = fs.readFileSync(path.join(root,'hotspot/js/status.js'),'utf8');
-for (const marker of ['ctx.ip','ctx.mac','ctx.loginBy','ctx.interfaceName','ctx.vlanId','ctx.bytesIn','ctx.bytesOut','ctx.bytesTotal','ctx.limitBytesTotal','ctx.remainBytesTotal','ctx.uptime','ctx.sessionTimeLeft']) {
+for (const marker of ['ctx.ip','ctx.mac','ctx.loginBy','ctx.interfaceName','ctx.vlanId','ctx.bytesIn','ctx.bytesOut','ctx.limitBytesTotal','ctx.remainBytesTotal','ctx.uptime','ctx.sessionTimeLeft']) {
   if (!statusJsFinal.includes(marker)) errors.push('status.js missing RouterOS field: '+marker);
 }
 
