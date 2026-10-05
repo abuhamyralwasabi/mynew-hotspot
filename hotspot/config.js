@@ -50,7 +50,7 @@ window.NETPRO_CONFIG = {
     { icon: "🛒", title: "سوبر ماركت الحسوة:", body: "تخفيضات كبرى بمناسبة الافتتاح، لا تفوت الفرصة!", highlight: "لا تفوت الفرصة!" },
     { icon: "📱", title: "شبكة نت برو اللاسلكي:", body: "بث مباشر + ألعاب + تحميل بسرعة عالية بأسعار منافسة!", highlight: "بأسعار منافسة!" }
   ],
-  defaultSpeed: "2M",
+  defaultSpeed: "1M",
   speeds: [
     { value: "256K", label: "سرعة ضعيفة", upload: "128K", download: "256K" },
     { value: "512K", label: "سرعة اقتصادية", upload: "200K", download: "512K" },
