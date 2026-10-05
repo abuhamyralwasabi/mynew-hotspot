@@ -181,6 +181,42 @@
     }
   }
 
+  function getLoginTarget() {
+    return ctx.linkLogin || ctx.linkLoginOnly || '$(link-login)';
+  }
+
+  function handoffFallback(error) {
+    var auth = window.NETPRO_AUTH;
+    if (!auth || typeof auth.shouldFallback !== 'function' ||
+        typeof auth.prepareFallback !== 'function') {
+      return false;
+    }
+
+    if (!auth.shouldFallback(error)) return false;
+
+    var fallback = auth.prepareFallback();
+    if (!fallback || !fallback.mode) return false;
+
+    if (typeof auth.saveAttempt === 'function') {
+      auth.saveAttempt(fallback);
+    }
+
+    var target = getLoginTarget();
+    if (!target) return false;
+
+    var separator = target.indexOf('?') >= 0 ? '&' : '?';
+    var query = [
+      'hs_dual_fallback=1',
+      'hs_auth_mode=' + encodeURIComponent(fallback.mode)
+    ].join('&');
+
+    setTimeout(function () {
+      location.replace(target + separator + query);
+    }, 30);
+
+    return true;
+  }
+
   function preferredMode(username, explicitMode) {
     var queryMode = normalizeMode(queryValue('hs_auth_mode'));
     if (queryMode) return queryMode;
@@ -288,7 +324,8 @@
     setTimeout(function () {
       if (!manualInteraction) doLogin({
         autoAttempt: attempt.auto,
-        mode: attempt.mode
+        mode: attempt.mode,
+        allowFallback: false
       });
     }, 80);
   }
@@ -355,6 +392,18 @@
     var pending = pendingState();
 
     if (ctx.error || queryValue('hs_error')) {
+      /*
+       * RouterOS may render the error directly in login.html instead of
+       * passing through flogin.html. In that case the previous dual-auth
+       * handoff must happen here as well so a local /ip hotspot user gets a
+       * second attempt with an empty domain.
+       *
+       * hs_dual_fallback=1 marks the second attempt, so its error is final.
+       */
+      if (!isDualFallback && handoffFallback(ctx.error || queryValue('hs_error'))) {
+        return;
+      }
+
       clearPending();
       if (window.NETPRO_AUTH) {
         window.NETPRO_AUTH.clearAutoAttempt();
@@ -400,6 +449,15 @@
     renderLoginError();
 
     if (!form || !input || !speed) return;
+
+    /*
+     * Always initialize the visible speed picker to the configured default.
+     * History/auto-login/reauth flows may override it afterwards.
+     */
+    speed.value = validSpeed(c.defaultSpeed || '');
+    if (window.NETPRO_SPEED_PICKER) {
+      window.NETPRO_SPEED_PICKER.setValue(speed, speed.value);
+    }
 
     renderHistory();
 
