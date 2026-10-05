@@ -209,7 +209,7 @@
       createdAt: Date.now()
     };
 
-    if (dualAuthEnabled() && radiusEnabled()) {
+    if (options.allowFallback !== false && dualAuthEnabled() && radiusEnabled()) {
       attempt.fallbackMode = oppositeMode(mode);
       attempt.allowFallback = true;
     }
@@ -337,7 +337,8 @@
     setTimeout(function () {
       doLogin({
         autoAttempt: true,
-        mode: 'radius'
+        mode: 'radius',
+        allowFallback: false
       });
     }, 100);
   }
