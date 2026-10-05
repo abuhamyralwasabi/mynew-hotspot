@@ -102,7 +102,7 @@ const loginTransport = fs.readFileSync(path.join(root,'hotspot/js/login.js'),'ut
 if (!loginTransport.includes('dualAuthEnabled') || !loginTransport.includes('prepareAttempt')) errors.push('login.js dual-auth engine is incomplete');
 if (!loginTransport.includes('allowFallback: false')) errors.push('login.js must prevent fallback loops');
 if (!loginTransport.includes('hs_dual_fallback')) errors.push('login.js must support the dual-auth fallback handoff');
-if (!loginTransport.includes('usesRadius ? selectedSpeed :')) errors.push('login.js must suppress domain transport on local-only routers');
+if (!loginTransport.includes('mode === \'radius\' && radiusEnabled())') errors.push('login.js must suppress domain transport on local-only routers');
 const speedTransport = fs.readFileSync(path.join(root,'routeros/speed2.rsc'),'utf8');
 if (!speedTransport.includes('domain unavailable or invalid')) errors.push('speed2.rsc must keep an explicit domain fallback log');
 if (!speedTransport.includes('>= 11 && [:pick $qComment 0 11]')) errors.push('speed2.rsc NetPro queue prefix detection is incorrect');
