@@ -16,9 +16,20 @@
     keepalive-timeout=10m
 }
 
-# Then paste routeros/speed2.rsc into:
-# IP -> HotSpot -> User Profiles -> NETPRO-SPEED -> Scripts -> On Login
-
+# Then paste:
+#   routeros/speed2.rsc
+# into:
+#   IP -> HotSpot -> User Profiles -> NETPRO-SPEED -> Scripts -> On Login
+#
+# Paste routeros/speed2-cleanup-on-logout.rsc into the same profile's
+# On Logout field. The cleanup removes only the NETPRO queue for the
+# logging-out client.
+#
+# Dual-auth behavior:
+# - RADIUS/User Manager: selected speed is read from active.domain.
+# - Local HotSpot user: domain is empty; speed2 uses the safe 2M fallback
+#   only when that local user is assigned to NETPRO-SPEED.
+#
 # Package architecture
 # Keep existing HotSpot user profiles untouched.
 # For new User Manager packages, keep traffic quota and validity in the
