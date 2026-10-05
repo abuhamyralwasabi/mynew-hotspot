@@ -48,15 +48,14 @@
 
     if (isFinal) {
       if (window.NETPRO_AUTH && typeof window.NETPRO_AUTH.finalLogout === 'function') {
-        window.NETPRO_AUTH.finalLogout();
+        var usernameHint = (window.HS_CONTEXT || {}).username || '';
+        window.NETPRO_AUTH.finalLogout(usernameHint);
       }
       if (window.NETPRO_AUTH) window.NETPRO_AUTH.clearAutoAttempt();
 
       var contextFinal = window.HS_CONTEXT || {};
       var finalLogin = contextFinal.linkLoginOnly || contextFinal.linkLogin || 'login.html';
-      setTimeout(function () {
-        location.replace(finalLogin);
-      }, 120);
+      location.replace(finalLogin);
       return;
     }
 

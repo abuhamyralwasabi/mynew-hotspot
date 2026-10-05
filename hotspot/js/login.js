@@ -26,6 +26,24 @@
     }
   }
 
+  function normalizeMode(value) {
+    value = String(value || '').toLowerCase();
+    return value === 'local' || value === 'radius' ? value : '';
+  }
+
+  function oppositeMode(mode) {
+    return mode === 'radius' ? 'local' : 'radius';
+  }
+
+  function radiusEnabled() {
+    return !!(c.router && c.router.usesRadius);
+  }
+
+  function dualAuthEnabled() {
+    return !(c.auth && c.auth.dualAuth === false) &&
+      !!(c.auth ? c.auth.localFallback !== false : true);
+  }
+
   function getRawError() {
     var source = document.getElementById('routerErrorSource');
     var routerError = source ? String(source.textContent || '').trim() : '';
@@ -48,9 +66,9 @@
     if (hint) hint.textContent = '⚠️ يرجى التحقق من رمز الكرت والمحاولة مرة أخرى';
   }
 
-  function credentialPassword(username) {
+  function credentialPassword() {
     var mode = c.auth && c.auth.passwordMode ? c.auth.passwordMode : 'blank';
-    return mode === 'blank' ? '' : username;
+    return mode === 'blank' ? '' : (input ? input.value.trim() : '');
   }
 
   function validSpeed(value) {
@@ -107,11 +125,13 @@
         manualInteraction = true;
         cancelAutoLogin();
         input.value = item.card;
+
         if (speed && window.NETPRO_SPEED_PICKER) {
           window.NETPRO_SPEED_PICKER.setValue(speed, validSpeed(item.speed));
         } else if (speed) {
           speed.value = validSpeed(item.speed);
         }
+
         if (wrap) wrap.hidden = true;
       });
 
@@ -161,36 +181,83 @@
     }
   }
 
+  function preferredMode(username, explicitMode) {
+    var queryMode = normalizeMode(queryValue('hs_auth_mode'));
+    if (queryMode) return queryMode;
+
+    var forced = normalizeMode(explicitMode);
+    if (forced) return forced;
+
+    var state = lastState();
+    if (state && state.username === username && state.source) {
+      return state.source;
+    }
+
+    return radiusEnabled() && (!c.auth || c.auth.radiusFirst !== false)
+      ? 'radius'
+      : 'local';
+  }
+
+  function prepareAttempt(username, selectedSpeed, mode, options) {
+    options = options || {};
+
+    var attempt = {
+      username: username,
+      speed: selectedSpeed,
+      mode: mode,
+      fallbackMode: '',
+      auto: options.autoAttempt === true,
+      allowFallback: false,
+      createdAt: Date.now()
+    };
+
+    if (options.allowFallback !== false && dualAuthEnabled() && radiusEnabled()) {
+      attempt.fallbackMode = oppositeMode(mode);
+      attempt.allowFallback = true;
+    }
+
+    if (window.NETPRO_AUTH && typeof window.NETPRO_AUTH.saveAttempt === 'function') {
+      window.NETPRO_AUTH.saveAttempt(attempt);
+    }
+  }
+
   function doLogin(options) {
     options = options || {};
 
     var username = (input.value || '').trim();
     var selectedSpeed = validSpeed(speed.value);
-    var rawPassword = credentialPassword(username);
+    var mode = preferredMode(username, options.mode);
 
     if (!username || !selectedSpeed) {
       if (!username) input.focus();
       return false;
     }
 
+    if (!radiusEnabled()) mode = 'local';
+    if (mode !== 'radius' && mode !== 'local') mode = radiusEnabled() ? 'radius' : 'local';
+
+    var rawPassword = credentialPassword();
+    var domainValue = (mode === 'radius' && radiusEnabled()) ? selectedSpeed : '';
+
     speed.value = selectedSpeed;
     if (password) password.value = rawPassword;
 
-    var usesRadius = !!(c.router && c.router.usesRadius);
-    // MikroTik separates/uses the HotSpot domain as a RADIUS user-domain.
-    // On a local-only router, sending domain causes user@domain lookup.
     if (window.NETPRO_SPEED_PICKER) {
       window.NETPRO_SPEED_PICKER.setValue(speed, selectedSpeed);
     }
 
+    prepareAttempt(username, selectedSpeed, mode, options);
+
     if (sendin && ctx.chapId) {
       sendin.username.value = username;
       sendin.password.value = hexMD5(ctx.chapId + rawPassword + ctx.chapChallenge);
-      sendin.domain.value = usesRadius ? selectedSpeed : '';
+      sendin.domain.value = domainValue;
       sendin.dst.value = getDestination();
+
       if (options.autoAttempt && window.NETPRO_AUTH) {
         window.NETPRO_AUTH.markAutoAttempt();
       }
+
       sendin.submit();
       return false;
     }
@@ -198,13 +265,35 @@
     if (form) {
       form.querySelector('input[name="username"]').value = username;
       form.querySelector('input[name="password"]').value = rawPassword;
-      form.querySelector('input[name="domain"]').value = usesRadius ? selectedSpeed : '';
+      form.querySelector('input[name="domain"]').value = domainValue;
     }
 
     return true;
   }
 
-  function startAutoLogin(username, selectedSpeed) {
+  function replayAttempt(attempt) {
+    if (!attempt || !attempt.username) return;
+
+    if (input) input.value = attempt.username;
+    if (speed) {
+      speed.value = validSpeed(attempt.speed);
+      if (window.NETPRO_SPEED_PICKER) {
+        window.NETPRO_SPEED_PICKER.setValue(speed, speed.value);
+      }
+    }
+
+    var overlay = document.getElementById('reauthOverlay');
+    if (overlay) overlay.hidden = false;
+
+    setTimeout(function () {
+      if (!manualInteraction) doLogin({
+        autoAttempt: attempt.auto,
+        mode: attempt.mode
+      });
+    }, 80);
+  }
+
+  function startAutoLogin(username, selectedSpeed, source) {
     if (!username || manualInteraction || !ctx.chapId) return;
     if (window.NETPRO_AUTH && window.NETPRO_AUTH.autoAttempted()) return;
 
@@ -220,7 +309,10 @@
     if (overlay) overlay.hidden = false;
 
     setTimeout(function () {
-      if (!manualInteraction) doLogin({ autoAttempt: true });
+      if (!manualInteraction) doLogin({
+        autoAttempt: true,
+        mode: normalizeMode(source)
+      });
     }, 100);
   }
 
@@ -245,7 +337,11 @@
     if (overlay) overlay.hidden = false;
 
     setTimeout(function () {
-      doLogin({ autoAttempt: true });
+      doLogin({
+        autoAttempt: true,
+        mode: 'radius',
+        allowFallback: false
+      });
     }, 100);
   }
 
@@ -255,13 +351,26 @@
     catch (e) { query = null; }
 
     var isReauth = query && query.get('hs_relogin') === '1';
+    var isDualFallback = query && query.get('hs_dual_fallback') === '1';
     var pending = pendingState();
 
     if (ctx.error || queryValue('hs_error')) {
       clearPending();
-      if (window.NETPRO_AUTH) window.NETPRO_AUTH.clearAutoAttempt();
+      if (window.NETPRO_AUTH) {
+        window.NETPRO_AUTH.clearAutoAttempt();
+        window.NETPRO_AUTH.clearAttempt();
+      }
       manualInteraction = true;
       return;
+    }
+
+    if (isDualFallback && window.NETPRO_AUTH) {
+      var fallbackAttempt = window.NETPRO_AUTH.readAttempt();
+      if (fallbackAttempt && fallbackAttempt.username &&
+          normalizeMode(fallbackAttempt.mode) === normalizeMode(queryValue('hs_auth_mode'))) {
+        replayAttempt(fallbackAttempt);
+        return;
+      }
     }
 
     if (isReauth || (pending && pending.auto)) {
@@ -280,8 +389,9 @@
 
     autoTimer = setTimeout(function () {
       autoTimer = null;
+
       if (!manualInteraction) {
-        startAutoLogin(state.username, state.speed || validSpeed(''));
+        startAutoLogin(state.username, state.speed || validSpeed(''), state.source);
       }
     }, 650);
   }
@@ -318,15 +428,26 @@
     if (clearButton) {
       clearButton.addEventListener('click', function () {
         markManualInteraction();
+
         try {
           localStorage.removeItem(historyKey);
           localStorage.removeItem('netpro_last_card');
           localStorage.removeItem('netpro_auth_state_v2');
           localStorage.removeItem('netpro_last_username');
+          localStorage.removeItem('netpro_last_speed');
         } catch (e) {}
-        try { document.cookie = 'netpro_last_username=; Max-Age=0; Path=/; SameSite=Lax'; } catch (e) {}
-        try { document.cookie = 'netpro_last_speed=; Max-Age=0; Path=/; SameSite=Lax'; } catch (e) {}
-        if (window.NETPRO_AUTH) window.NETPRO_AUTH.setAutoLogin(false);
+
+        try {
+          document.cookie = 'netpro_last_username=; Max-Age=0; Path=/; SameSite=Lax';
+          document.cookie = 'netpro_last_speed=; Max-Age=0; Path=/; SameSite=Lax';
+        } catch (e) {}
+
+        if (window.NETPRO_AUTH) {
+          window.NETPRO_AUTH.setAutoLogin(false);
+          window.NETPRO_AUTH.clearAttempt();
+          window.NETPRO_AUTH.clearAutoAttempt();
+        }
+
         renderHistory();
       });
     }
@@ -349,17 +470,20 @@
 
         if (window.NETPRO_AUTH) window.NETPRO_AUTH.clearAutoAttempt();
 
-        doLogin({ autoAttempt: false });
+        doLogin({
+          autoAttempt: false,
+          mode: state.source || (radiusEnabled() ? 'radius' : 'local')
+        });
+
+        if (!ctx.chapId && form) form.submit();
       });
     }
 
     form.addEventListener('submit', function (event) {
       event.preventDefault();
-      doLogin({ autoAttempt: false });
 
-      // Without CHAP the browser must submit the form itself after the
-      // hidden credentials have been populated.
-      if (!ctx.chapId) form.submit();
+      var shouldSubmit = doLogin({ autoAttempt: false });
+      if (shouldSubmit && !ctx.chapId) form.submit();
     });
 
     document.addEventListener('click', function (event) {

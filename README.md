@@ -33,23 +33,35 @@ Run: `node tests/validate.js`
 Then follow `docs/TEST-CHECKLIST.md` and `docs/DEPLOYMENT.md` on a real RouterOS 6 test router before production.
 
 The official MikroTik HotSpot documentation describes `domain` as a client variable and `alogin.html` as the page shown after successful login.
-## Speed transport prerequisite
+## Dual authentication: HotSpot User + User Manager
 
-The selected speed is transported through the HotSpot `domain` field only when
-the router uses RADIUS. MikroTik documents that `split-user-domain` separates
-a `user@domain` identity and that `active.domain` is used with RADIUS
-authentication.
+Production NetPro can authenticate the same card-code form against both
+RouterOS local HotSpot users and User Manager/RADIUS users.
 
-Therefore:
-- Production NetPro with User Manager/RADIUS: `router.usesRadius=true` and the
-  selected speed is submitted as `domain=<speed>`.
-- Local-only test router: `router.usesRadius=false`; the portal leaves
-  `domain` empty so the local username remains exactly the card code.
-  Dynamic domain-based speed cannot be validated on a local-only router and
-  speed2 safely falls back to 2M.
+The login engine is intentionally **dual-source**, not dual-form:
+1. It tries the preferred authentication source.
+2. When the failure is specifically an authentication/source failure
+   (for example invalid credentials, user not found, Access-Reject, or a
+   RADIUS timeout), it retries **once** against the opposite source.
+3. Session limits, expired cards, traffic limits, disabled users, and other
+   non-authentication failures are never silently retried against another
+   source.
+4. The successful source is saved with the last-card state, so roaming and
+   the "دخول بآخر كرت" button can use the known source first.
 
-Do not try to fix a local-only authentication failure by enabling
-`split-user-domain`; that setting belongs to the RADIUS user/domain path.
+For User Manager/RADIUS authentication, the selected speed is transported
+through the HotSpot `domain=<speed>` field and remains available to the
+NetPro On Login speed script.
+
+For local `/ip hotspot user` authentication, the portal sends an empty
+domain so the username remains exactly the card code. RouterOS does not expose
+the same RADIUS domain transport for local users, so a local user must rely on
+the HotSpot User Profile that is already assigned to that account. The status
+page therefore disables portal speed changes for local-source sessions rather
+than displaying a false speed.
+
+No password is stored in the browser. NetPro card accounts use the card code
+as username with an empty password.
 
 
 ## Unified portal architecture

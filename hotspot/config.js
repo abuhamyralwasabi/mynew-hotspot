@@ -11,9 +11,18 @@ window.NETPRO_CONFIG = {
     footerText: "تصميم قسم الـ IT نت برو"
   },
   auth: {
-    // The portal exposes one card-code field only. NetPro card accounts use
-    // an empty HotSpot password; the card code is the username.
-    passwordMode: "blank"
+    // NetPro cards use the card code as username and an empty password.
+    passwordMode: "blank",
+
+    // The router can authenticate against both:
+    //   1) local /ip hotspot user
+    //   2) User Manager through RADIUS
+    //
+    // The portal tries one source first and, only for source/authentication
+    // failures, retries once against the opposite source.
+    dualAuth: true,
+    radiusFirst: true,
+    localFallback: true
   },
   router: {
     model: "RB1100Dx4",

@@ -13,6 +13,28 @@
     return '';
   }
 
+  function getAuthState() {
+    try {
+      return window.NETPRO_AUTH && typeof window.NETPRO_AUTH.read === 'function'
+        ? window.NETPRO_AUTH.read()
+        : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function authSource() {
+    var state = getAuthState();
+    if (validSpeed(ctx.domain)) return 'radius';
+    if (state && state.source === 'radius') return 'radius';
+    if (state && state.source === 'local') return 'local';
+    return radiusConfigured() ? 'radius' : 'local';
+  }
+
+  function radiusConfigured() {
+    return !!(c.router && c.router.usesRadius);
+  }
+
   function getStoredSpeed() {
     try {
       var scoped = ctx.username ? localStorage.getItem('netpro_status_speed:' + ctx.username) : '';
@@ -22,8 +44,7 @@
   }
 
   function currentSpeed() {
-    return validSpeed(ctx.domain) || getStoredSpeed() || validSpeed(c.defaultSpeed) ||
-      ((c.speeds || [])[0] || {}).value || '';
+    return validSpeed(ctx.domain) || getStoredSpeed() || '';
   }
 
   function setText(id, value) {
@@ -112,6 +133,9 @@
     setText('interfaceName', ctx.interfaceName || 'غير محدد');
     setText('vlanId', ctx.vlanId || 'غير محدد');
     setText('idleTime', formatDuration(ctx.idleTime));
+    setText('authSource', authSource() === 'radius'
+      ? 'User Manager / RADIUS'
+      : 'HotSpot User محلي');
   }
 
   function updateUsage() {
@@ -119,9 +143,9 @@
     var routerRemain = numberValue(ctx.remainBytesTotal);
     var sessionUsed = (numberValue(ctx.bytesIn) || 0) + (numberValue(ctx.bytesOut) || 0);
 
-    // When RouterOS supplies remain-bytes-total, it is the authoritative
-    // remaining quota value. Otherwise only the measured traffic counters
-    // are shown and no artificial quota is created.
+    // RouterOS remain-bytes-total is the authoritative remaining quota when
+    // available. Otherwise the documented bytes-in + bytes-out counters are
+    // used for current-session traffic.
     var used = routerRemain !== null && total !== null
       ? Math.max(0, total - routerRemain)
       : sessionUsed;
@@ -173,16 +197,35 @@
   }
 
   function renderCurrentSpeed() {
-    var speed = currentSpeed();
-    setText('currentSpeed', speed || '—');
-    setText('currentSpeedDuplicate', speed || '—');
-
+    var source = authSource();
+    var speed = source === 'radius' ? currentSpeed() : '';
     var select = document.getElementById('speedChange');
+    var button = document.getElementById('applySpeed');
+    var note = document.getElementById('speedChangeNote');
+
+    setText('currentSpeed', speed || 'حسب ملف الخدمة');
+    setText('currentSpeedDuplicate', speed || 'حسب ملف الخدمة');
+
     if (!select) return;
 
-    select.value = speed;
-    if (window.NETPRO_SPEED_PICKER) {
-      window.NETPRO_SPEED_PICKER.setValue(select, speed);
+    if (source === 'radius' && speed) {
+      select.disabled = false;
+      select.value = speed;
+      if (window.NETPRO_SPEED_PICKER) {
+        window.NETPRO_SPEED_PICKER.setValue(select, speed);
+      }
+    } else {
+      select.disabled = true;
+      if (window.NETPRO_SPEED_PICKER) {
+        window.NETPRO_SPEED_PICKER.setValue(select, '');
+      }
+    }
+
+    if (button) button.disabled = source !== 'radius';
+    if (note) {
+      note.textContent = source === 'radius'
+        ? 'يمكن تغيير السرعة لأن الحساب موثق عبر User Manager / RADIUS.'
+        : 'هذا الكرت مستخدم محليًا في HotSpot؛ السرعة يحددها HotSpot User Profile، ولا يتم إرسال domain من هذا المسار.';
     }
   }
 
@@ -193,6 +236,7 @@
     var button = document.getElementById('applySpeed');
     var overlay = document.getElementById('reauthOverlay');
 
+    if (authSource() !== 'radius') return;
     if (!next || !current || next === current || !ctx.linkLogout) return;
 
     try {

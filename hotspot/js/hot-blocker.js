@@ -34,6 +34,16 @@
       a.indexOf('already logged') >= 0;
   }
 
+  function isDualAuthFallback(error) {
+    try {
+      return !!(window.NETPRO_AUTH &&
+        typeof window.NETPRO_AUTH.shouldFallback === 'function' &&
+        window.NETPRO_AUTH.shouldFallback(error));
+    } catch (e) {
+      return false;
+    }
+  }
+
   function init() {
     var countdown = document.querySelector('[data-block-countdown]');
     if (countdown) {
@@ -67,6 +77,11 @@
     }
 
     var error = marker.getAttribute('login-error') || '';
+
+    // A dual-auth handoff is a deliberate second authentication attempt.
+    // Do not count the first RADIUS/local source mismatch as a bad card.
+    if (isDualAuthFallback(error)) return;
+
     if (!error || isTransientError(error)) return;
 
     var count = (parseInt(cookie(FAIL_COUNT), 10) || 0) + 1;
