@@ -21,6 +21,7 @@
       vlanId: "$(vlan-id)",
       bytesIn: "$(bytes-in)",
       bytesOut: "$(bytes-out)",
+      bytesTotal: "$(bytes-total)",
       limitBytesIn: "$(limit-bytes-in)",
       limitBytesOut: "$(limit-bytes-out)",
       limitBytesTotal: "$(limit-bytes-total)",
@@ -39,6 +40,7 @@
       linkStatus: "$(link-status)"
     };
   </script>
+  <script src="js/auth.js"></script>
   <script src="js/app.js"></script>
   <script src="js/speed-picker.js"></script>
   <script src="js/status.js"></script>
@@ -72,6 +74,7 @@
           <div class="status-row"><strong>عنوان IP</strong><span class="status-value" id="clientIp" dir="ltr">—</span></div>
           <div class="status-row"><strong>عنوان MAC</strong><span class="status-value" id="clientMac" dir="ltr">—</span></div>
           <div class="status-row"><strong>طريقة الدخول</strong><span class="status-value" id="loginBy">—</span></div>
+          <div class="status-row"><strong>مصدر المصادقة</strong><span class="status-value" id="authSource">—</span></div>
           <div class="status-row"><strong>واجهة الاتصال</strong><span class="status-value" id="interfaceName">—</span></div>
           <div class="status-row"><strong>VLAN</strong><span class="status-value" id="vlanId" dir="ltr">—</span></div>
           <div class="status-row"><strong>السرعة الحالية</strong><span class="status-value speed-current-value" id="currentSpeed">—</span></div>
@@ -94,6 +97,7 @@
         <label class="field-label" for="speedChange">تحديث السرعة</label>
         <div class="speed-picker" id="statusSpeedPicker"><button class="speed-picker-button" type="button" data-speed-trigger aria-haspopup="listbox" aria-expanded="false"><span class="speed-label" data-speed-label>—</span><span class="speed-arrow" aria-hidden="true">⌄</span></button><div class="speed-picker-menu" data-speed-menu role="listbox" aria-label="اختيار سرعة جديدة"></div><select class="select" id="speedChange" tabindex="-1" aria-hidden="true"></select></div>
         <button class="btn btn-change" id="applySpeed" type="button">🔄 تطبيق السرعة الجديدة</button>
+        <p class="text-muted" id="speedChangeNote" style="margin:8px 0 0;font-size:12px"></p>
       </div>
 
       <a class="btn btn-rest" href="$(link-status)?service=rest">🍿 الاستراحة</a>
